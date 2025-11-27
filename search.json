@@ -1,0 +1,92 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "OpenPrescribing in R",
+    "section": "",
+    "text": "Overview\nThis tutorial walks you through how to work with the OpenPrescribing.net BigQuery data in R. It will cover:\n\nConnect to the BigQuery database from R using DBI1 and bigrquery2\nDescription of the BigQuery schema using dm3\nReusable functions to work with the data using dbplyr4\n\n\n\n\n\n1. R Special Interest Group on Databases (R-SIG-DB), Wickham, H. & Müller, K. DBI: R Database Interface. (2024). doi:10.32614/CRAN.package.DBI.\n\n\n2. Wickham, H. & Bryan, J. bigrquery: An Interface to Google’s ’BigQuery’ ’API’. (2025). doi:10.32614/CRAN.package.bigrquery.\n\n\n3. Schieferdecker, T., Müller, K. & Bergant, D. dm: Relational Data Models. (2025). doi:10.32614/CRAN.package.dm.\n\n\n4. Wickham, H., Girlich, M. & Ruiz, E. dbplyr: A ’Dplyr’ Back End for Databases. (2024). doi:10.32614/CRAN.package.dbplyr.",
+    "crumbs": [
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "chapters/connect-bq.html",
+    "href": "chapters/connect-bq.html",
+    "title": "1  Connect to BigQuery",
+    "section": "",
+    "text": "1.1 Authorise BigQuery\nTo get access to the OpenPrescribing BigQuery database write a message in the #openprescribing Slack channel and tag slack-admin. One of the admins will send you a JSON file with your BigQuery credentials in a private message. The file should look something like this:\nIMPORTANT: Never commit this file to GitHub or share it with anyone.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Connect to BigQuery</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/connect-bq.html#authorise-bigquery",
+    "href": "chapters/connect-bq.html#authorise-bigquery",
+    "title": "1  Connect to BigQuery",
+    "section": "",
+    "text": "{\n  \"type\": \"ACCOUNT_TYPE\",\n  \"project_id\": \"PROJECT_ID\",\n  \"private_key_id\": \"PRIVATE_KEY_ID\",\n  \"private_key\": \"PRIVATE_KEY\",\n  \"client_email\": \"CLIENT_EMAIL\",\n  \"client_id\": \"CLIENT_ID\",\n  \"auth_uri\": \"AUTH_URI\",\n  \"token_uri\": \"TOKEN_URI\",\n  \"auth_provider_x509_cert_url\": \"AUTH_CERTIFICATE\",\n  \"client_x509_cert_url\": \"CLIENT_CERTIFICATE\",\n  \"universe_domain\": \"DOMAIN\"\n}\n\n\n1.1.1 Where to store your credentials\nYou can store this file anywhere on your computer, but a common location is in a hidden folder in your home directory, for example:\nOn macOS/Linux:\n~/.config/openprescribing/bq-credentials.json\nOn Windows:\nC:/Users/YOUR_USERNAME/.config/openprescribing/bq-credentials.json\n\n\n1.1.2 Set up the environment variable\nRather than hardcoding the path in your R scripts you can set an environment variable named OP_CREDENTIALS or similar. To help you edit your .Renviron file and set the variable for all R sessions you can use the usethis package:\n\n# Open your .Renviron file\nusethis::edit_r_environ()\n\nThis will open your .Renviron file in your editor where you can add the location where you stored your credentials file, for example:\n# macOS/Linux\nOP_CREDENTIALS=~/.config/openprescribing/bq-credentials.json\n\n# Windows\nOP_CREDENTIALS=C:/Users/YOUR_USERNAME/.config/openprescribing/bq-credentials.json\nNote: You will probably need to restart your R session for R to know about your new environment variable.\n\n\n1.1.3 Connecting to BigQuery\nThe following code connects to the hscic dataset in the ebmdatalab project. You will need to authenticate using the path to your credentials file stored in the OP_CREDENTIALS environment variable and might be asked to login with your Google account the first time you run this.\n\nlibrary(DBI)\nlibrary(bigrquery)\n\nbq_auth(path = Sys.getenv(\"OP_CREDENTIALS\"))\n\ncon &lt;- dbConnect(\n  bigrquery::bigquery(),\n  project = \"ebmdatalab\",\n  dataset = \"hscic\",\n  billing = \"ebmdatalab\"\n)",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Connect to BigQuery</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/database-schema.html",
+    "href": "chapters/database-schema.html",
+    "title": "2  Database schema",
+    "section": "",
+    "text": "2.1 Main hscic tables\nThis has multiple tables, we’re now looking at the main ones we use for research projects using the OpenPrescribing data. To see all the tables available in the hscic dataset, you can use:\ndbListTables(con)",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Database schema</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/database-schema.html#main-hscic-tables",
+    "href": "chapters/database-schema.html#main-hscic-tables",
+    "title": "2  Database schema",
+    "section": "",
+    "text": "2.1.1 normalised_prescribing\nAdd description here.\n\n\n\n\n\n\n\n\nColumns\n\n\n\n\n\n\nsha\ncharacter\nStrategic Health Authority code\n\n\nregional_team\ncharacter\nRegional team identifier\n\n\nstp\ncharacter\nSustainability and Transformation Partnership code\n\n\npct\ncharacter\nPrimary Care Trust code\n\n\npractice\ncharacter\nPractice code\n\n\nbnf_code\ncharacter\nBritish National Formulary (BNF) code\n\n\nbnf_name\ncharacter\nBritish National Formulary (BNF) drug name\n\n\nitems\ninteger\nCount of prescription items\n\n\nnet_cost\nnumeric\nNet ingredient cost\n\n\nactual_cost\nnumeric\nActual cost?\n\n\nquantity\nnumeric\nTotal quantity prescribed?\n\n\nmonth\nPOSIXct\nPrescribing month\n\n\n\nRows 10 Columns 12\n\n\n\n\n\n\n\n\n\n\n2.1.2 regional_teams\nAdd description here.\n\n\n\n\n\n\n\n\nColumns\n\n\n\n\n\n\ncode\ncharacter\nRegional team code\n\n\nname\ncharacter\nRegional team name\n\n\nopen_date\nDate\nOpen date\n\n\nclose_date\nDate\nClosing date, NA if still open\n\n\n\nRows 10 Columns 4\n\n\n\n\n\n\n\n\n\n\n2.1.3 practices\nAdd description here.\n\n\n\n\n\n\n\n\nColumns\n\n\n\n\n\n\ncode\ncharacter\nPractice code\n\n\nname\ncharacter\nPractice name\n\n\naddress1\ncharacter\nAddress line 1\n\n\naddress2\ncharacter\nAddress line 2\n\n\naddress3\ncharacter\nAddress line 3\n\n\naddress4\ncharacter\nAddress line 4 (town/city)\n\n\naddress5\ncharacter\nAddress line 5\n\n\npostcode\ncharacter\nPractice postcode\n\n\nlocation\ncharacter\nGeographic location?\n\n\nccg_id\ncharacter\nClinical Commissioning Group identifier\n\n\npcn_id\ncharacter\nPrimary Care Network identifier\n\n\nsetting\ninteger\n?\n\n\nclose_date\ncharacter\nDate practice closed\n\n\njoin_provider_date\ncharacter\nDate practice joined WHAT?\n\n\nleave_provider_date\ncharacter\nDate practice left WHAT?\n\n\nopen_date\ncharacter\nDate practice opened\n\n\nstatus_code\ncharacter\nPractice status code\n\n\n\nRows 10 Columns 17\n\n\n\n\n\n\n\n\n\n\n2.1.4 practice_statistics\nAdd description here.\n\n\n\n\n\n\n\n\nColumns\n\n\n\n\n\n\nmonth\nPOSIXct\nThe month for which practice statistics are recorded\n\n\nmale_0_4\ninteger\nCount of male patients aged 0-4 years\n\n\nfemale_0_4\ninteger\nCount of female patients aged 0-4 years\n\n\nmale_5_14\ninteger\nCount of male patients aged 5-14 years\n\n\nmale_15_24\ninteger\nCount of male patients aged 15-24 years\n\n\nmale_25_34\ninteger\nCount of male patients aged 25-34 years\n\n\nmale_35_44\ninteger\nCount of male patients aged 35-44 years\n\n\nmale_45_54\ninteger\nCount of male patients aged 45-54 years\n\n\nmale_55_64\ninteger\nCount of male patients aged 55-64 years\n\n\nmale_65_74\ninteger\nCount of male patients aged 65-74 years\n\n\nmale_75_plus\ninteger\nCount of male patients aged 75 years and over\n\n\nfemale_5_14\ninteger\nCount of female patients aged 5-14 years\n\n\nfemale_15_24\ninteger\nCount of female patients aged 15-24 years\n\n\nfemale_25_34\ninteger\nCount of female patients aged 25-34 years\n\n\nfemale_35_44\ninteger\nCount of female patients aged 35-44 years\n\n\nfemale_45_54\ninteger\nCount of female patients aged 45-54 years\n\n\nfemale_55_64\ninteger\nCount of female patients aged 55-64 years\n\n\nfemale_65_74\ninteger\nCount of female patients aged 65-74 years\n\n\nfemale_75_plus\ninteger\nCount of female patients aged 75 years and over\n\n\ntotal_list_size\ninteger\nTotal Count of patients registered at the practice\n\n\nastro_pu_cost\nnumeric\nASTRO PU? cost\n\n\nastro_pu_items\nnumeric\nASTRO PU? items\n\n\nstar_pu\ncharacter\nSTAR PU?\n\n\npct_id\ncharacter\nPCT? identifier\n\n\npractice\ncharacter\nPractice code\n\n\n\nRows 10 Columns 25",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Database schema</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/database-schema.html#relationship-diagram",
+    "href": "chapters/database-schema.html#relationship-diagram",
+    "title": "2  Database schema",
+    "section": "2.2 Relationship diagram?",
+    "text": "2.2 Relationship diagram?\nAdd description here.\n\n\n\n\n\n\n\n\nFigure 2.1: Relationship diagram for hscic tables",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Database schema</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/functions.html",
+    "href": "chapters/functions.html",
+    "title": "3  Reusable functions",
+    "section": "",
+    "text": "Write some functins here using dbplyr1.\n\n\n\n\n1. Wickham, H., Girlich, M. & Ruiz, E. dbplyr: A ’Dplyr’ Back End for Databases. (2024). doi:10.32614/CRAN.package.dbplyr.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Reusable functions</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/example.html",
+    "href": "chapters/example.html",
+    "title": "4  Applied example",
+    "section": "",
+    "text": "Replicate some work here that illustrates how nice it is to do this in R.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Applied example</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/references.html",
+    "href": "chapters/references.html",
+    "title": "References",
+    "section": "",
+    "text": "1. R\nSpecial Interest Group on Databases (R-SIG-DB), Wickham, H. &\nMüller, K. DBI: R Database Interface. (2024).\ndoi:10.32614/CRAN.package.DBI.\n\n\n2. Wickham, H., Girlich, M. & Ruiz, E.\ndbplyr: A ’Dplyr’ Back End for\nDatabases. (2024). doi:10.32614/CRAN.package.dbplyr.\n\n\n3. Schieferdecker, T., Müller, K. & Bergant,\nD. dm: Relational Data Models.\n(2025). doi:10.32614/CRAN.package.dm.\n\n\n4. Wickham, H. & Bryan, J. bigrquery: An Interface to Google’s ’BigQuery’\n’API’. (2025). doi:10.32614/CRAN.package.bigrquery.",
+    "crumbs": [
+      "References"
+    ]
+  }
+]

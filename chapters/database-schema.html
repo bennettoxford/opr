@@ -1,0 +1,2869 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>2&nbsp; Database schema – OpenPrescribing in R</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/functions.html" rel="next">
+<link href="../chapters/connect-bq.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-27c261d06b905028a18691de25d09dde.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="../site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+<script src="../site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<script src="../site_libs/viz-1.8.2/viz.js"></script>
+<link href="../site_libs/DiagrammeR-styles-0.2/styles.css" rel="stylesheet">
+<script src="../site_libs/grViz-binding-1.0.11/grViz.js"></script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/database-schema.html"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Database schema</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">OpenPrescribing in R</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/connect-bq.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Connect to BigQuery</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/database-schema.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Database schema</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/functions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Reusable functions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/example.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Applied example</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#main-hscic-tables" id="toc-main-hscic-tables" class="nav-link active" data-scroll-target="#main-hscic-tables"><span class="header-section-number">2.1</span> Main <code>hscic</code> tables</a>
+  <ul class="collapse">
+  <li><a href="#normalised_prescribing" id="toc-normalised_prescribing" class="nav-link" data-scroll-target="#normalised_prescribing"><span class="header-section-number">2.1.1</span> <code>normalised_prescribing</code></a></li>
+  <li><a href="#regional_teams" id="toc-regional_teams" class="nav-link" data-scroll-target="#regional_teams"><span class="header-section-number">2.1.2</span> <code>regional_teams</code></a></li>
+  <li><a href="#practices" id="toc-practices" class="nav-link" data-scroll-target="#practices"><span class="header-section-number">2.1.3</span> <code>practices</code></a></li>
+  <li><a href="#practice_statistics" id="toc-practice_statistics" class="nav-link" data-scroll-target="#practice_statistics"><span class="header-section-number">2.1.4</span> <code>practice_statistics</code></a></li>
+  </ul></li>
+  <li><a href="#relationship-diagram" id="toc-relationship-diagram" class="nav-link" data-scroll-target="#relationship-diagram"><span class="header-section-number">2.2</span> Relationship diagram?</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Database schema</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="main-hscic-tables" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="main-hscic-tables"><span class="header-section-number">2.1</span> Main <code>hscic</code> tables</h2>
+<p>This has multiple tables, we’re now looking at the main ones we use for research projects using the OpenPrescribing data. To see all the tables available in the <code>hscic</code> dataset, you can use:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbListTables</span>(con)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="normalised_prescribing" class="level3" data-number="2.1.1">
+<h3 data-number="2.1.1" class="anchored" data-anchor-id="normalised_prescribing"><span class="header-section-number">2.1.1</span> <code>normalised_prescribing</code></h3>
+<p>Add description here.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fufhxrxutr" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#fufhxrxutr table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#fufhxrxutr thead, #fufhxrxutr tbody, #fufhxrxutr tfoot, #fufhxrxutr tr, #fufhxrxutr td, #fufhxrxutr th {
+  border-style: none;
+}
+
+#fufhxrxutr p {
+  margin: 0;
+  padding: 0;
+}
+
+#fufhxrxutr .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 14px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#fufhxrxutr .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#fufhxrxutr .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#fufhxrxutr .gt_heading {
+  background-color: #FFFFFF;
+  text-align: left;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#fufhxrxutr .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#fufhxrxutr .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#fufhxrxutr .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#fufhxrxutr .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#fufhxrxutr .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#fufhxrxutr .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#fufhxrxutr .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#fufhxrxutr .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#fufhxrxutr .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#fufhxrxutr .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#fufhxrxutr .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#fufhxrxutr .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#fufhxrxutr .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#fufhxrxutr .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#fufhxrxutr .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#fufhxrxutr .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#fufhxrxutr .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#fufhxrxutr .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#fufhxrxutr .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#fufhxrxutr .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#fufhxrxutr .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#fufhxrxutr .gt_left {
+  text-align: left;
+}
+
+#fufhxrxutr .gt_center {
+  text-align: center;
+}
+
+#fufhxrxutr .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#fufhxrxutr .gt_font_normal {
+  font-weight: normal;
+}
+
+#fufhxrxutr .gt_font_bold {
+  font-weight: bold;
+}
+
+#fufhxrxutr .gt_font_italic {
+  font-style: italic;
+}
+
+#fufhxrxutr .gt_super {
+  font-size: 65%;
+}
+
+#fufhxrxutr .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#fufhxrxutr .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#fufhxrxutr .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#fufhxrxutr .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#fufhxrxutr .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#fufhxrxutr .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#fufhxrxutr .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#fufhxrxutr .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#fufhxrxutr div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="column_name" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Columns</strong></th>
+<th id="data_type" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+<th id="description" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">sha</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Strategic Health Authority code</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">regional_team</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Regional team identifier</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">stp</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Sustainability and Transformation Partnership code</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">pct</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Primary Care Trust code</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">practice</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Practice code</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">bnf_code</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">British National Formulary (BNF) code</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">bnf_name</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">British National Formulary (BNF) drug name</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">items</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of prescription items</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">net_cost</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">numeric</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Net ingredient cost</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">actual_cost</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">numeric</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Actual cost?</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">quantity</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">numeric</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Total quantity prescribed?</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">month</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">POSIXct</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Prescribing month</td>
+</tr>
+</tbody><tfoot>
+<tr class="gt_sourcenotes odd">
+<td colspan="3" class="gt_sourcenote"><strong>Rows</strong> 10 <strong>Columns</strong> 12</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="regional_teams" class="level3" data-number="2.1.2">
+<h3 data-number="2.1.2" class="anchored" data-anchor-id="regional_teams"><span class="header-section-number">2.1.2</span> <code>regional_teams</code></h3>
+<p>Add description here.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="ioxeavemfz" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ioxeavemfz table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#ioxeavemfz thead, #ioxeavemfz tbody, #ioxeavemfz tfoot, #ioxeavemfz tr, #ioxeavemfz td, #ioxeavemfz th {
+  border-style: none;
+}
+
+#ioxeavemfz p {
+  margin: 0;
+  padding: 0;
+}
+
+#ioxeavemfz .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 14px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#ioxeavemfz .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#ioxeavemfz .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#ioxeavemfz .gt_heading {
+  background-color: #FFFFFF;
+  text-align: left;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#ioxeavemfz .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#ioxeavemfz .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#ioxeavemfz .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#ioxeavemfz .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#ioxeavemfz .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#ioxeavemfz .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#ioxeavemfz .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#ioxeavemfz .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#ioxeavemfz .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#ioxeavemfz .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#ioxeavemfz .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ioxeavemfz .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#ioxeavemfz .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#ioxeavemfz .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#ioxeavemfz .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ioxeavemfz .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#ioxeavemfz .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ioxeavemfz .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#ioxeavemfz .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ioxeavemfz .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ioxeavemfz .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ioxeavemfz .gt_left {
+  text-align: left;
+}
+
+#ioxeavemfz .gt_center {
+  text-align: center;
+}
+
+#ioxeavemfz .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#ioxeavemfz .gt_font_normal {
+  font-weight: normal;
+}
+
+#ioxeavemfz .gt_font_bold {
+  font-weight: bold;
+}
+
+#ioxeavemfz .gt_font_italic {
+  font-style: italic;
+}
+
+#ioxeavemfz .gt_super {
+  font-size: 65%;
+}
+
+#ioxeavemfz .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#ioxeavemfz .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#ioxeavemfz .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#ioxeavemfz .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#ioxeavemfz .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#ioxeavemfz .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#ioxeavemfz .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#ioxeavemfz .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#ioxeavemfz div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="column_name" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Columns</strong></th>
+<th id="data_type" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+<th id="description" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">code</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Regional team code</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">name</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Regional team name</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">open_date</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">Date</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Open date</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">close_date</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">Date</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Closing date, NA if still open</td>
+</tr>
+</tbody><tfoot>
+<tr class="gt_sourcenotes odd">
+<td colspan="3" class="gt_sourcenote"><strong>Rows</strong> 10 <strong>Columns</strong> 4</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="practices" class="level3" data-number="2.1.3">
+<h3 data-number="2.1.3" class="anchored" data-anchor-id="practices"><span class="header-section-number">2.1.3</span> <code>practices</code></h3>
+<p>Add description here.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="wvgeyunbqg" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#wvgeyunbqg table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#wvgeyunbqg thead, #wvgeyunbqg tbody, #wvgeyunbqg tfoot, #wvgeyunbqg tr, #wvgeyunbqg td, #wvgeyunbqg th {
+  border-style: none;
+}
+
+#wvgeyunbqg p {
+  margin: 0;
+  padding: 0;
+}
+
+#wvgeyunbqg .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 14px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#wvgeyunbqg .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#wvgeyunbqg .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#wvgeyunbqg .gt_heading {
+  background-color: #FFFFFF;
+  text-align: left;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#wvgeyunbqg .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#wvgeyunbqg .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#wvgeyunbqg .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#wvgeyunbqg .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#wvgeyunbqg .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#wvgeyunbqg .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#wvgeyunbqg .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#wvgeyunbqg .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#wvgeyunbqg .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#wvgeyunbqg .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#wvgeyunbqg .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wvgeyunbqg .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#wvgeyunbqg .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#wvgeyunbqg .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#wvgeyunbqg .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wvgeyunbqg .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#wvgeyunbqg .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wvgeyunbqg .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#wvgeyunbqg .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wvgeyunbqg .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#wvgeyunbqg .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#wvgeyunbqg .gt_left {
+  text-align: left;
+}
+
+#wvgeyunbqg .gt_center {
+  text-align: center;
+}
+
+#wvgeyunbqg .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#wvgeyunbqg .gt_font_normal {
+  font-weight: normal;
+}
+
+#wvgeyunbqg .gt_font_bold {
+  font-weight: bold;
+}
+
+#wvgeyunbqg .gt_font_italic {
+  font-style: italic;
+}
+
+#wvgeyunbqg .gt_super {
+  font-size: 65%;
+}
+
+#wvgeyunbqg .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#wvgeyunbqg .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#wvgeyunbqg .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#wvgeyunbqg .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#wvgeyunbqg .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#wvgeyunbqg .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#wvgeyunbqg .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#wvgeyunbqg .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#wvgeyunbqg div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="column_name" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Columns</strong></th>
+<th id="data_type" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+<th id="description" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">code</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Practice code</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">name</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Practice name</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">address1</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Address line 1</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">address2</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Address line 2</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">address3</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Address line 3</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">address4</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Address line 4 (town/city)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">address5</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Address line 5</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">postcode</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Practice postcode</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">location</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Geographic location?</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">ccg_id</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Clinical Commissioning Group identifier</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">pcn_id</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Primary Care Network identifier</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">setting</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">?</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">close_date</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Date practice closed</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">join_provider_date</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Date practice joined WHAT?</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">leave_provider_date</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Date practice left WHAT?</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">open_date</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Date practice opened</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">status_code</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Practice status code</td>
+</tr>
+</tbody><tfoot>
+<tr class="gt_sourcenotes odd">
+<td colspan="3" class="gt_sourcenote"><strong>Rows</strong> 10 <strong>Columns</strong> 17</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="practice_statistics" class="level3" data-number="2.1.4">
+<h3 data-number="2.1.4" class="anchored" data-anchor-id="practice_statistics"><span class="header-section-number">2.1.4</span> <code>practice_statistics</code></h3>
+<p>Add description here.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="hjxrynlxye" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#hjxrynlxye table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#hjxrynlxye thead, #hjxrynlxye tbody, #hjxrynlxye tfoot, #hjxrynlxye tr, #hjxrynlxye td, #hjxrynlxye th {
+  border-style: none;
+}
+
+#hjxrynlxye p {
+  margin: 0;
+  padding: 0;
+}
+
+#hjxrynlxye .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 14px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#hjxrynlxye .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#hjxrynlxye .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#hjxrynlxye .gt_heading {
+  background-color: #FFFFFF;
+  text-align: left;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#hjxrynlxye .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#hjxrynlxye .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#hjxrynlxye .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#hjxrynlxye .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#hjxrynlxye .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#hjxrynlxye .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#hjxrynlxye .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#hjxrynlxye .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#hjxrynlxye .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#hjxrynlxye .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#hjxrynlxye .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hjxrynlxye .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#hjxrynlxye .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#hjxrynlxye .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#hjxrynlxye .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hjxrynlxye .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#hjxrynlxye .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hjxrynlxye .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#hjxrynlxye .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hjxrynlxye .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#hjxrynlxye .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hjxrynlxye .gt_left {
+  text-align: left;
+}
+
+#hjxrynlxye .gt_center {
+  text-align: center;
+}
+
+#hjxrynlxye .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#hjxrynlxye .gt_font_normal {
+  font-weight: normal;
+}
+
+#hjxrynlxye .gt_font_bold {
+  font-weight: bold;
+}
+
+#hjxrynlxye .gt_font_italic {
+  font-style: italic;
+}
+
+#hjxrynlxye .gt_super {
+  font-size: 65%;
+}
+
+#hjxrynlxye .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#hjxrynlxye .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#hjxrynlxye .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#hjxrynlxye .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#hjxrynlxye .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#hjxrynlxye .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#hjxrynlxye .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#hjxrynlxye .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#hjxrynlxye div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="column_name" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Columns</strong></th>
+<th id="data_type" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+<th id="description" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">month</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">POSIXct</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">The month for which practice statistics are recorded</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">male_0_4</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of male patients aged 0-4 years</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">female_0_4</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of female patients aged 0-4 years</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">male_5_14</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of male patients aged 5-14 years</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">male_15_24</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of male patients aged 15-24 years</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">male_25_34</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of male patients aged 25-34 years</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">male_35_44</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of male patients aged 35-44 years</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">male_45_54</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of male patients aged 45-54 years</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">male_55_64</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of male patients aged 55-64 years</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">male_65_74</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of male patients aged 65-74 years</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">male_75_plus</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of male patients aged 75 years and over</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">female_5_14</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of female patients aged 5-14 years</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">female_15_24</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of female patients aged 15-24 years</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">female_25_34</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of female patients aged 25-34 years</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">female_35_44</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of female patients aged 35-44 years</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">female_45_54</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of female patients aged 45-54 years</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">female_55_64</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of female patients aged 55-64 years</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">female_65_74</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of female patients aged 65-74 years</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">female_75_plus</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Count of female patients aged 75 years and over</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">total_list_size</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">integer</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Total Count of patients registered at the practice</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">astro_pu_cost</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">numeric</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">ASTRO PU? cost</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">astro_pu_items</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">numeric</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">ASTRO PU? items</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">star_pu</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">STAR PU?</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">pct_id</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">PCT? identifier</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="column_name" style="font-family: monospace; font-weight: bold">practice</td>
+<td class="gt_row gt_left" headers="data_type" style="color: #7F7F7F; font-family: monospace; font-style: italic">character</td>
+<td class="gt_row gt_left" headers="description" style="color: #1E90FF">Practice code</td>
+</tr>
+</tbody><tfoot>
+<tr class="gt_sourcenotes odd">
+<td colspan="3" class="gt_sourcenote"><strong>Rows</strong> 10 <strong>Columns</strong> 25</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="relationship-diagram" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="relationship-diagram"><span class="header-section-number">2.2</span> Relationship diagram?</h2>
+<p>Add description here.</p>
+<div class="cell">
+<div id="fig-hscic-relationships" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hscic-relationships-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="grViz html-widget html-fill-item" id="htmlwidget-8aa5cdcbbdfba0794376" style="width:100%;height:812px;"></div>
+<script type="application/json" data-for="htmlwidget-8aa5cdcbbdfba0794376">{"x":{"diagram":"#data_model\ndigraph {\ngraph [rankdir=LR tooltip=\"Data Model\" ]\n\nnode [margin=0 fontcolor = \"#444444\" ]\n\nedge [color = \"#555555\", arrowsize = 1, ]\n\npack=true\npackmode= \"node\"\n\n  \"normalised_prescribing\" [id = \"normalised_prescribing\", label = <<TABLE ALIGN=\"LEFT\" BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" COLOR=\"#555555\">\n    <TR>\n      <TD COLSPAN=\"1\" BGCOLOR=\"#EFEBDD\" BORDER=\"0\"><FONT COLOR=\"#000000\">normalised_prescribing<\/FONT>\n<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">sha<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\" PORT=\"regional_team\">regional_team<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">stp<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">pct<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\" PORT=\"practice\">practice<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">bnf_code<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">bnf_name<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">items<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">net_cost<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">actual_cost<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">quantity<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">month<\/TD>\n    <\/TR>\n  <\/TABLE>>, shape = \"plaintext\"] \n\n  \"practice_statistics\" [id = \"practice_statistics\", label = <<TABLE ALIGN=\"LEFT\" BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" COLOR=\"#555555\">\n    <TR>\n      <TD COLSPAN=\"1\" BGCOLOR=\"#EFEBDD\" BORDER=\"0\"><FONT COLOR=\"#000000\">practice_statistics<\/FONT>\n<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">month<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">male_0_4<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">female_0_4<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">male_5_14<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">male_15_24<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">male_25_34<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">male_35_44<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">male_45_54<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">male_55_64<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">male_65_74<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">male_75_plus<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">female_5_14<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">female_15_24<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">female_25_34<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">female_35_44<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">female_45_54<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">female_55_64<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">female_65_74<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">female_75_plus<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">total_list_size<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">astro_pu_cost<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">astro_pu_items<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">star_pu<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">pct_id<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\" PORT=\"practice\">practice<\/TD>\n    <\/TR>\n  <\/TABLE>>, shape = \"plaintext\"] \n\n  \"practices\" [id = \"practices\", label = <<TABLE ALIGN=\"LEFT\" BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" COLOR=\"#555555\">\n    <TR>\n      <TD COLSPAN=\"1\" BGCOLOR=\"#EFEBDD\" BORDER=\"0\"><FONT COLOR=\"#000000\">practices<\/FONT>\n<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\" PORT=\"code\"><U>code<\/U><\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">name<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">address1<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">address2<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">address3<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">address4<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">address5<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">postcode<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">location<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">ccg_id<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">pcn_id<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">setting<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">close_date<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">join_provider_date<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">leave_provider_date<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">open_date<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">status_code<\/TD>\n    <\/TR>\n  <\/TABLE>>, shape = \"plaintext\"] \n\n  \"regional_teams\" [id = \"regional_teams\", label = <<TABLE ALIGN=\"LEFT\" BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" COLOR=\"#555555\">\n    <TR>\n      <TD COLSPAN=\"1\" BGCOLOR=\"#EFEBDD\" BORDER=\"0\"><FONT COLOR=\"#000000\">regional_teams<\/FONT>\n<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\" PORT=\"code\"><U>code<\/U><\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">name<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">open_date<\/TD>\n    <\/TR>\n    <TR>\n      <TD ALIGN=\"LEFT\" BGCOLOR=\"#FFFFFF\">close_date<\/TD>\n    <\/TR>\n  <\/TABLE>>, shape = \"plaintext\"] \n\n\"normalised_prescribing\":\"practice\"->\"practices\":\"code\" [id=\"normalised_prescribing_1\"]\n\"practice_statistics\":\"practice\"->\"practices\":\"code\" [id=\"practice_statistics_1\"]\n\"normalised_prescribing\":\"regional_team\"->\"regional_teams\":\"code\" [id=\"normalised_prescribing_2\"]\n}","config":{"engine":null,"options":null}},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hscic-relationships-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.1: Relationship diagram for <code>hscic</code> tables
+</figcaption>
+</figure>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/connect-bq.html" class="pagination-link" aria-label="Connect to BigQuery">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Connect to BigQuery</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/functions.html" class="pagination-link" aria-label="Reusable functions">
+        <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Reusable functions</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
