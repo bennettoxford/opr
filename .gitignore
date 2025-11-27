@@ -1,0 +1,12 @@
+_book/
+.quarto/
+*.html
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+/.quarto/
+**/*.quarto_ipynb
+chapters/database-schema_files/*
+chapters/database-schema_cache/*

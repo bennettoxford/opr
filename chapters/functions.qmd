@@ -1,0 +1,239 @@
+---
+code-links:
+  - text: connect-bq.R
+    icon: file-code
+    href: ../R/connect-bq.R
+---
+
+# Reusable functions
+
+All functions here are based on the `DBI`, `bigrquery`, `dplyr` and `dbplyr` packages to connect to BigQuery and query the OpenPrescribing data in R.
+
+```{r}
+#| label: load-libraries
+#| message: false
+#| warning: false
+library(DBI)
+library(bigrquery)
+library(dplyr)
+library(dbplyr)
+```
+
+## Connect to BigQuery
+
+We could write a simple function to connect to BigQuery that we can reuse in our R scripts.
+This function assumes that you have set the `OP_CREDENTIALS` environment variable in @sec-env-var and we can define different datasets to connect to by changing the `dataset` argument (default is `hscic`).
+
+```{r}
+#| label: simple-connect-bq-function
+connect_openprescribing <- function(dataset = "hscic") {
+  # Get BigQuery credentials path from environment variable
+  credentials_path <- Sys.getenv("OP_CREDENTIALS")
+
+  # Authorise BigQuery
+  bigrquery::bq_auth(path = credentials_path)
+
+  # Connect to BigQuery
+  DBI::dbConnect(
+    bigrquery::bigquery(),
+    project = "ebmdatalab",
+    dataset = dataset,
+    billing = "ebmdatalab"
+  )
+}
+```
+
+A slighly more robust and flexibly function could also have an option to work with different environment variables and return helpful error messages, see the example below.
+
+```{r}
+#| label: robust-connect-bq-function
+#| file: ../R/connect-bq.R
+#| code-fold: true
+#| code-summary: Show more flexible and robust function to connect to BigQuery
+```
+
+However, the simple example would do the job and we can establish a connection like this:
+
+```{r}
+#| label: use-connect-bq-function
+con <- connect_openprescribing()
+```
+
+## Data access functions
+
+These functions provide a modular way to access and analyse OpenPrescribing data using dbplyr.
+Each function returns a lazy query that can be composed with other dplyr functions.
+For a more detailed overview see [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html).
+
+I'll demonstrate this how this might be useful for two commonly used tables: `practices` and `normalised_prescribing`.
+
+### Get practices
+
+For a description of the `practices` table see @sec-desc-practices.
+
+```{r}
+#| label: get-practices-function
+#| code-fold: true
+#| code-summary: Show `get_practices()` function to help access and tidy the `practices` table
+
+get_practices <- function(
+  con,
+  add_setting_labels = FALSE,
+  filter_setting = NULL,
+  add_status_code_labels = FALSE,
+  filter_status_code = NULL
+) {
+
+  practices_query <- dplyr::tbl(con, "practices")
+
+  # Add status code description labels
+  if (add_status_code_labels) {
+    practices_query <- practices_query |>
+      dplyr::mutate(
+        status_code_label = dplyr::case_when(
+          status_code == "A" ~ "Active",
+          status_code == "B" ~ "Retired",
+          status_code == "C" ~ "Closed",
+          status_code == "D" ~ "Dormant",
+          status_code == "P" ~ "Proposed",
+          status_code == "U" ~ "Unknown",
+          .default = "Unknown"
+        )
+      )
+  }
+
+  # Add setting description labels
+  if (add_setting_labels) {
+    practices_query <- practices_query |>
+      dplyr::mutate(
+        setting_label = dplyr::case_when(
+          setting == 0  ~ "Other",
+          setting == 1  ~ "WIC Practice",
+          setting == 2  ~ "OOH Practice",
+          setting == 3  ~ "WIC + OOH Practice",
+          setting == 4  ~ "GP Practice",
+          setting == 8  ~ "Public Health Service",
+          setting == 9  ~ "Community Health Service",
+          setting == 10 ~ "Hospital Service",
+          setting == 11 ~ "Optometry Service",
+          setting == 12 ~ "Urgent & Emergency Care",
+          setting == 13 ~ "Hospice",
+          setting == 14 ~ "Care Home / Nursing Home",
+          setting == 15 ~ "Border Force",
+          setting == 16 ~ "Young Offender Institution",
+          setting == 17 ~ "Secure Training Centre",
+          setting == 18 ~ "Secure Childrens Home",
+          setting == 19 ~ "Immigration Removal Centre",
+          setting == 20 ~ "Court",
+          setting == 21 ~ "Police Custody",
+          setting == 22 ~ "Sexual Assault Referral Centre (SARC)",
+          setting == 24 ~ "Other – Justice Estate",
+          setting == 25 ~ "Prison",
+          setting == 26 ~ "PCN",
+          setting == 27 ~ "Independent Pharmacy",
+          .default = "Unknown"
+        )
+      )
+  }
+
+  # Filter by setting codes
+  if (!is.null(filter_setting)) {
+    practices_query <- practices_query |>
+      dplyr::filter(setting %in% filter_setting)
+  }
+
+  # Filter by setting codes
+  if (!is.null(filter_status_code)) {
+    practices_query <- practices_query |>
+      dplyr::filter(status_code %in% filter_status_code)
+  }
+
+  practices_query
+}
+```
+
+Now we can use this function to get practices data using the different options we defined in the function above.
+Here are the first 5 rows of some columns we can select using the `select()` function from `dplyr`, unfiltered and without labels:
+
+```{r}
+#| label: get-practices-function-example-1
+get_practices(con) |> 
+  select(code, name, postcode, setting, status_code) |> 
+  head(5)
+```
+
+We can specify to add labels for the setting codes and filter to only include standard GP practices (setting code 4). 
+
+```{r}
+#| label: get-practices-function-example-2
+get_practices(con, add_setting_labels = TRUE, filter_setting = 4) |> 
+  select(code, name, postcode, setting, setting_label, status_code) |> 
+  head(5)
+```
+
+
+```{r}
+#| label: get-practices-function-example-3
+get_practices(con, add_setting_labels = TRUE, filter_setting = 4,
+              add_status_code_labels = TRUE) |> 
+  select(code, name, postcode, setting, setting_label, status_code, status_code_label) |> 
+  head(5)
+```
+
+### Get normalised prescribing
+
+For a description of the `normalised_prescribing` table see @sec-desc-normalised-prescribing.
+This function returns normalised prescribing data with optional filtering by BNF codes and date range.
+
+```{r}
+#| label: get-normalised-prescribing-function
+#| code-fold: true
+#| code-summary: Show `get_normalised_prescribing()` function to help access and tidy the `normalised_prescribing` table
+
+get_normalised_prescribing <- function(
+  con,
+  bnf_codes = NULL,
+  start_date = NULL,
+  end_date = NULL) {
+  
+  np_query <- dplyr::tbl(con, "normalised_prescribing")
+
+  # Filter by BNF codes if provided
+  if (!is.null(bnf_codes)) {
+    np_query <- np_query |>
+      dplyr::filter(bnf_code %in% !!bnf_codes)
+  }
+
+  # Filter by start date if provided
+  if (!is.null(start_date)) {
+    np_query <- np_query |>
+      dplyr::filter(month >= !!start_date)
+  }
+
+  # Filter by end date if provided
+  if (!is.null(end_date)) {
+    np_query <- np_query |>
+      dplyr::filter(month <= !!end_date)
+  }
+
+  np_query
+}
+```
+
+In this example we get normalised prescribing data for two BNF codes between January and March 2023.
+
+```{r}
+#| label: get-normalised-prescribing-example-1
+get_normalised_prescribing(
+  con, 
+  bnf_codes = c("0408010W0BBAKA1", "0601022B0AAASAS"),
+  start_date = "2023-01-01",
+  end_date = "2023-03-01"
+  ) |> 
+  filter(practice == "D83033") |> 
+  head(5)
+```
+
+## Writing SQL with dbplyr
+
+See [Writing SQL with dbplyr](https://dbplyr.tidyverse.org/articles/sql.html).

@@ -1,0 +1,207 @@
+# Database schema
+
+```{r}
+#| label: setup
+#| include: false
+
+library(DBI)
+library(bigrquery)
+library(dplyr)
+library(here)
+library(gt)
+library(dm)
+
+source(here("R", "connect-bq.R"))
+source(here("R", "create-bq-desc-tbl.R"))
+source(here("R", "tbl-dict.R"))
+
+con <- connect_bq()
+dbListTables(con)
+```
+
+## Main `hscic` tables
+
+The `hscic` dataset has 194 different tables.
+Here we describe the main tables used for research projects.
+To see all the tables available in the `hscic` dataset, you can use:
+
+```{r}
+#| label: db-list-tables
+#| eval: false
+
+dbListTables(con)
+```
+
+### `normalised_prescribing` {#sec-desc-normalised-prescribing}
+
+Normalised view of the main prescribing dataset, updated monthly.
+This is the table you'll typically want to query rather than the raw prescribing table.
+
+```{r}
+#| label: desc-normalised-prescribing
+#| echo: false
+#| cache: true
+
+normalised_prescribing <- tbl(con, "normalised_prescribing")
+
+df_normalised_prescribing <- normalised_prescribing |>
+  head(10) |>
+  collect()
+
+create_data_dict(
+  df_normalised_prescribing,
+  "normalised_prescribing"
+)
+```
+
+### `regional_teams` {#sec-desc-regional-teams}
+
+Open and close dates for regional teams.
+
+```{r}
+#| label: desc-regional-teams
+#| echo: false
+#| cache: true
+
+regional_teams <- tbl(con, "regional_teams")
+
+df_regional_teams <- regional_teams |>
+  head(10) |>
+  collect()
+
+create_data_dict(
+  df_regional_teams,
+  "regional_teams"
+)
+```
+
+### `practices` {#sec-desc-practices}
+
+Includes all the practices in England, updated monthly.
+Contains latest month's data only (but includes closed practices).
+Practices with a `setting` of `4` are standard GP practices.
+Other settings are:
+
+- `0` = Other
+- `1` = WIC Practice
+- `2` = OOH Practice
+- `3` = WIC + OOH Practice
+- `4` = GP Practice
+- `8` = Public Health Service
+- `9` = Community Health Service
+- `10` = Hospital Service
+- `11` = Optometry Service
+- `12` = Urgent & Emergency Care
+- `13` = Hospice
+- `14` = Care Home / Nursing Home
+- `15` = Border Force
+- `16` = Young Offender Institution
+- `17` = Secure Training Centre
+- `18` = Secure Children's Home
+- `19` = Immigration Removal Centre
+- `20` = Court
+- `21` = Police Custody
+- `22` = Sexual Assault Referral Centre (SARC)
+- `24` = Other
+
+```{r}
+#| label: desc-practices
+#| echo: false
+#| cache: true
+
+practices <- tbl(con, "practices")
+
+df_practices <- practices |>
+  filter(setting == 4) |> 
+  head(100) |>
+  collect()
+
+# Look at unique values sampled from each column
+# df_practices %>% 
+#   summarise(across(everything(), ~ sample(unique(.x), 1))) %>% 
+#   tidyr::pivot_longer(
+#     cols = everything(),
+#     values_transform = list(value = as.character),
+#     names_to  = "column",
+#     values_to = "value"
+#   )
+
+create_data_dict(
+  df_practices,
+  "practices"
+)
+```
+
+### `practice_statistics` {#sec-desc-practice-statistics}
+
+Total list size and list sizes stratified by gender and age group for each practice, updated monthly.
+Contains latest month's data only. Also contains calculated population weightings related to prescribing (STAR-PU and ASTRO-PU).
+
+```{r}
+#| label: desc-practice-statistics
+#| echo: false
+
+practice_statistics <- tbl(con, "practice_statistics")
+
+df_practice_statistics <- practice_statistics |>
+  head(10) |>
+  collect()
+
+# Look at unique values sampled from each column
+# df_practice_statistics %>% 
+#   summarise(across(everything(), ~ sample(unique(.x), 1))) %>% 
+#   tidyr::pivot_longer(
+#     cols = everything(),
+#     values_transform = list(value = as.character),
+#     names_to  = "column",
+#     values_to = "value"
+#   ) |> 
+#   print(n = 25)
+
+create_data_dict(
+  df_practice_statistics,
+  "practice_statistics"
+)
+```
+
+## Relationship diagram?
+
+I need someone to check this.
+Could add some tables from the dmd dataset here (and above)?
+Add description here.
+
+```{r}
+#| label: fig-hscic-relationships
+#| echo: false
+#| message: false
+#| warning: false
+#| cache: true
+#| fig-height: 10
+#| fig-width: 8
+#| fig-cap: "Relationship diagram for `hscic` tables"
+
+hscic_dm <- dm_from_con(
+  con,
+  schema = "hscic",
+  table_names = c(
+    "normalised_prescribing",
+    "practices",
+    "practice_statistics",
+    "regional_teams"
+  )
+)
+
+# Define primary keys
+hscic_dm <- hscic_dm |>
+  dm_add_pk(practices, code) |>
+  dm_add_pk(regional_teams, code)
+
+# Define foreign keys
+hscic_dm <- hscic_dm |>
+  dm_add_fk(normalised_prescribing, practice, practices) |>
+  dm_add_fk(normalised_prescribing, regional_team, regional_teams) |>
+  dm_add_fk(practice_statistics, practice, practices)
+
+hscic_dm |>
+  dm_draw(view_type = "all")
+```

@@ -1,0 +1,88 @@
+# Connect to BigQuery
+
+## Get access
+
+To get access to the OpenPrescribing BigQuery database write a message in the `#openprescribing` Slack channel and tag `slack-admin`.
+One of the admins will send you a JSON file with your BigQuery credentials in a private message. 
+The file should look something like this:
+
+```json
+{
+  "type": "ACCOUNT_TYPE",
+  "project_id": "PROJECT_ID",
+  "private_key_id": "PRIVATE_KEY_ID",
+  "private_key": "PRIVATE_KEY",
+  "client_email": "CLIENT_EMAIL",
+  "client_id": "CLIENT_ID",
+  "auth_uri": "AUTH_URI",
+  "token_uri": "TOKEN_URI",
+  "auth_provider_x509_cert_url": "AUTH_CERTIFICATE",
+  "client_x509_cert_url": "CLIENT_CERTIFICATE",
+  "universe_domain": "DOMAIN"
+}
+```
+
+**IMPORTANT: Never commit this file to GitHub or share it with anyone.**
+
+## Store your credentials
+
+You can store this file anywhere on your computer, but a common location is in a hidden folder in your home directory, for example:
+
+**On macOS/Linux:**
+
+```bash
+~/.config/openprescribing/bq-credentials.json
+```
+
+**On Windows:**
+
+```bash
+C:/Users/YOUR_USERNAME/.config/openprescribing/bq-credentials.json
+```
+
+## Set up env variable {#sec-env-var}
+
+Rather than hardcoding the path in your R scripts you can set an environment variable named `OP_CREDENTIALS` or similar.
+To help you edit your `.Renviron` file and set the variable for all R sessions you can use the `usethis` package:
+
+```{r}
+#| label: edit-r-environ
+#| eval: false
+
+# Open your .Renviron file
+usethis::edit_r_environ()
+```
+
+This will open your `.Renviron` file in your editor where you can add the location where you stored your credentials file, for example:
+
+```bash
+# macOS/Linux
+OP_CREDENTIALS=~/.config/openprescribing/bq-credentials.json
+
+# Windows
+OP_CREDENTIALS=C:/Users/YOUR_USERNAME/.config/openprescribing/bq-credentials.json
+```
+
+**Note: You will probably need to restart your R session for R to know about your new environment variable.**
+
+## Connet to BigQuery
+
+The following code connects to the `hscic` dataset in the `ebmdatalab` project.
+You will need to authenticate using the path to your credentials file stored in the `OP_CREDENTIALS` environment variable and might be asked to login with your Google account the first time you run this.
+
+```{r}
+#| label: connect-bq
+#| eval: false
+
+library(DBI)
+library(bigrquery)
+
+bq_auth(path = Sys.getenv("OP_CREDENTIALS"))
+
+con <- dbConnect(
+  bigrquery::bigquery(),
+  project = "ebmdatalab",
+  dataset = "hscic",
+  billing = "ebmdatalab"
+)
+```

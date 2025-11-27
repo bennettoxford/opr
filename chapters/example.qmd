@@ -1,0 +1,3 @@
+# Applied example
+
+Replicate some work here that illustrates how nice it is to do this in R.

@@ -1,0 +1,8 @@
+# Overview {.unnumbered}
+
+This tutorial walks you through how to work with the [OpenPrescribing.net](https://openprescribing.net/) BigQuery data in R. It will cover:
+
+1. **Connect to BigQuery** from R using [`DBI`](https://dbi.r-dbi.org/) [@DBI] and [`bigrquery`](https://bigrquery.r-dbi.org/) [@bigrquery]
+2. **Description of the main tables** in the BigQuery database** [`dm`](https://dm.cynkra.com/) [@dm]
+3. **Reusable functions in R** using [`dbplyr`](https://dbplyr.tidyverse.org/) [@dbplyr]
+4. **Applied example** following PICK AN EXAMPLE STUDY WE DID

@@ -1,0 +1,27 @@
+project:
+  type: book
+
+book:
+  title: "OpenPrescribing in R"
+  author:
+    - name: "Milan Wiedemann"
+      orcid: "0000-0003-1991-282X"
+  date: today
+  chapters:
+    - index.qmd
+    - chapters/connect-bq.qmd
+    - chapters/database-schema.qmd
+    - chapters/functions.qmd
+    - chapters/example.qmd
+    - chapters/references.qmd
+
+bibliography: references.bib
+csl: nature.csl
+
+format:
+  html:
+    theme:
+      - cosmo
+      - brand
+  pdf:
+    documentclass: scrreprt
