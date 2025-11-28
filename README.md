@@ -7,7 +7,7 @@ This is a brief tutorial for accessing and analysing the [OpenPrescribing.net](h
 - Writing reusable functions for common queries
 - Applied examples of prescription data analysis
 
-The full tutorial is available online at [https://openprescribing.net/opr/](https://openprescribing.net/opr/).
+The full tutorial is available online at [https://bennettoxford.github.io/opr/](https://bennettoxford.github.io/opr/).
 
 ## For R users
 
