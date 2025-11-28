@@ -20,27 +20,42 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for citations */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
-  margin-bottom: 0em;
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
 }
-.hanging-indent div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}</style>
+</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -169,8 +184,20 @@ div.csl-indent {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#connect-to-bigquery" id="toc-connect-to-bigquery" class="nav-link active" data-scroll-target="#connect-to-bigquery"><span class="header-section-number">3.1</span> Connect to BigQuery</a></li>
+  <li><a href="#data-access-functions" id="toc-data-access-functions" class="nav-link" data-scroll-target="#data-access-functions"><span class="header-section-number">3.2</span> Data access functions</a>
+  <ul class="collapse">
+  <li><a href="#get-practices" id="toc-get-practices" class="nav-link" data-scroll-target="#get-practices"><span class="header-section-number">3.2.1</span> Get practices</a></li>
+  <li><a href="#get-normalised-prescribing" id="toc-get-normalised-prescribing" class="nav-link" data-scroll-target="#get-normalised-prescribing"><span class="header-section-number">3.2.2</span> Get normalised prescribing</a></li>
+  </ul></li>
+  <li><a href="#writing-sql-with-dbplyr" id="toc-writing-sql-with-dbplyr" class="nav-link" data-scroll-target="#writing-sql-with-dbplyr"><span class="header-section-number">3.3</span> Writing SQL with dbplyr</a></li>
+  </ul>
+<div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../R/connect-bq.R"><i class="bi bi-file-code"></i>connect-bq.R</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -194,14 +221,304 @@ div.csl-indent {
 </header>
 
 
-<p>Write some functins here using <code>dbplyr</code><span class="citation" data-cites="dbplyr"><sup><a href="references.html#ref-dbplyr" role="doc-biblioref">1</a></sup></span>.</p>
-
-
-<div id="refs" class="references csl-bib-body" data-entry-spacing="0" data-line-spacing="2" role="list" style="display: none">
-<div id="ref-dbplyr" class="csl-entry" role="listitem">
-<div class="csl-left-margin">1. </div><div class="csl-right-inline">Wickham, H., Girlich, M. &amp; Ruiz, E. <em><span class="nocase">dbplyr</span>: A ’Dplyr’ Back End for Databases</em>. (2024). doi:<a href="https://doi.org/10.32614/CRAN.package.dbplyr">10.32614/CRAN.package.dbplyr</a>.</div>
+<p>All functions here are based on the <code>DBI</code>, <code>bigrquery</code>, <code>dplyr</code> and <code>dbplyr</code> packages to connect to BigQuery and query the OpenPrescribing data in R.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bigrquery)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dbplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="connect-to-bigquery" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="connect-to-bigquery"><span class="header-section-number">3.1</span> Connect to BigQuery</h2>
+<p>We could write a simple function to connect to BigQuery that we can reuse in our R scripts. This function assumes that you have set the <code>OP_CREDENTIALS</code> environment variable in <a href="connect-bq.html#sec-env-var" class="quarto-xref"><span>Section 1.3</span></a> and we can define different datasets to connect to by changing the <code>dataset</code> argument (default is <code>hscic</code>).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>connect_openprescribing <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">dataset =</span> <span class="st">"hscic"</span>) {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get BigQuery credentials path from environment variable</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  credentials_path <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">"OP_CREDENTIALS"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Authorise BigQuery</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  bigrquery<span class="sc">::</span><span class="fu">bq_auth</span>(<span class="at">path =</span> credentials_path)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Connect to BigQuery</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  DBI<span class="sc">::</span><span class="fu">dbConnect</span>(</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    bigrquery<span class="sc">::</span><span class="fu">bigquery</span>(),</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">project =</span> <span class="st">"ebmdatalab"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">dataset =</span> dataset,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">billing =</span> <span class="st">"ebmdatalab"</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A slighly more robust and flexibly function could also have an option to work with different environment variables and return helpful error messages, see the example below.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show more flexible and robust function to connect to BigQuery</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Connect to BigQuery</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>connect_bq <span class="ot">&lt;-</span> <span class="cf">function</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">project =</span> <span class="st">"ebmdatalab"</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> <span class="st">"hscic"</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">billing =</span> <span class="st">"ebmdatalab"</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">credentials_var =</span> <span class="st">"OP_CREDENTIALS"</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get the credentials path from environment variable</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  credentials_path <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(credentials_var)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check if environment variable is set</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (credentials_path <span class="sc">==</span> <span class="st">""</span>) {</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    cli<span class="sc">::</span><span class="fu">cli_abort</span>(<span class="fu">c</span>(</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(<span class="st">"Environment variable"</span>, credentials_var, <span class="st">"is not set."</span>),</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>      <span class="st">"i"</span> <span class="ot">=</span> <span class="st">"Please set it in your .Renviron file to point to your BigQuery credentials JSON file."</span>,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">"i"</span> <span class="ot">=</span> <span class="st">"You can edit your .Renviron file using: usethis::edit_r_environ()"</span>,</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">"i"</span> <span class="ot">=</span> <span class="st">"See chapters/connect-bq.qmd for detailed setup instructions."</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check if the credentials file exists</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(credentials_path)) {</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    cli<span class="sc">::</span><span class="fu">cli_abort</span>(<span class="fu">c</span>(</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(<span class="st">"Credentials file not found at:"</span>, credentials_path),</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>      <span class="st">"i"</span> <span class="ot">=</span> <span class="fu">paste</span>(</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>        <span class="st">"The"</span>,</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>        credentials_var,</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="st">"environment variable is set, but the file does not exist."</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>      <span class="st">"i"</span> <span class="ot">=</span> <span class="st">"Please check the path in your .Renviron file."</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Authenticate with BigQuery</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>  cli<span class="sc">::</span><span class="fu">cli_alert_info</span>(<span class="st">"Authenticating with BigQuery ..."</span>)</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>  bigrquery<span class="sc">::</span><span class="fu">bq_auth</span>(<span class="at">path =</span> credentials_path)</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Connect to BigQuery</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  cli<span class="sc">::</span><span class="fu">cli_alert_info</span>(<span class="fu">paste0</span>(</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Connecting to project "</span>,</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    project,</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    <span class="st">", dataset "</span>,</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>    dataset</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>  con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    bigrquery<span class="sc">::</span><span class="fu">bigquery</span>(),</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">project =</span> project,</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">dataset =</span> dataset,</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">billing =</span> billing</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>  cli<span class="sc">::</span><span class="fu">cli_alert_success</span>(<span class="st">"Successfully connected to BigQuery!"</span>)</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">invisible</span>(con)</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>However, the simple example would do the job and we can establish a connection like this:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">connect_openprescribing</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="data-access-functions" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="data-access-functions"><span class="header-section-number">3.2</span> Data access functions</h2>
+<p>These functions provide a modular way to access and analyse OpenPrescribing data using dbplyr. Each function returns a lazy query that can be composed with other dplyr functions. For a more detailed overview see <a href="https://dbplyr.tidyverse.org/articles/dbplyr.html">Introduction to dbplyr</a>.</p>
+<p>I’ll demonstrate this how this might be useful for two commonly used tables: <code>practices</code> and <code>normalised_prescribing</code>.</p>
+<section id="get-practices" class="level3" data-number="3.2.1">
+<h3 data-number="3.2.1" class="anchored" data-anchor-id="get-practices"><span class="header-section-number">3.2.1</span> Get practices</h3>
+<p>For a description of the <code>practices</code> table see <a href="database-schema.html#sec-desc-practices" class="quarto-xref"><span>Section 2.1.3</span></a>.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show <code>get_practices()</code> function to help access and tidy the <code>practices</code> table</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>get_practices <span class="ot">&lt;-</span> <span class="cf">function</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  con,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">add_setting_labels =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">filter_setting =</span> <span class="cn">NULL</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">add_status_code_labels =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">filter_status_code =</span> <span class="cn">NULL</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  practices_query <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">tbl</span>(con, <span class="st">"practices"</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add status code description labels</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (add_status_code_labels) {</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    practices_query <span class="ot">&lt;-</span> practices_query <span class="sc">|&gt;</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">status_code_label =</span> dplyr<span class="sc">::</span><span class="fu">case_when</span>(</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>          status_code <span class="sc">==</span> <span class="st">"A"</span> <span class="sc">~</span> <span class="st">"Active"</span>,</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>          status_code <span class="sc">==</span> <span class="st">"B"</span> <span class="sc">~</span> <span class="st">"Retired"</span>,</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>          status_code <span class="sc">==</span> <span class="st">"C"</span> <span class="sc">~</span> <span class="st">"Closed"</span>,</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>          status_code <span class="sc">==</span> <span class="st">"D"</span> <span class="sc">~</span> <span class="st">"Dormant"</span>,</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>          status_code <span class="sc">==</span> <span class="st">"P"</span> <span class="sc">~</span> <span class="st">"Proposed"</span>,</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>          status_code <span class="sc">==</span> <span class="st">"U"</span> <span class="sc">~</span> <span class="st">"Unknown"</span>,</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>          <span class="at">.default =</span> <span class="st">"Unknown"</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add setting description labels</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (add_setting_labels) {</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    practices_query <span class="ot">&lt;-</span> practices_query <span class="sc">|&gt;</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>        <span class="at">setting_label =</span> dplyr<span class="sc">::</span><span class="fu">case_when</span>(</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">0</span>  <span class="sc">~</span> <span class="st">"Other"</span>,</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">1</span>  <span class="sc">~</span> <span class="st">"WIC Practice"</span>,</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">2</span>  <span class="sc">~</span> <span class="st">"OOH Practice"</span>,</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">3</span>  <span class="sc">~</span> <span class="st">"WIC + OOH Practice"</span>,</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">4</span>  <span class="sc">~</span> <span class="st">"GP Practice"</span>,</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">8</span>  <span class="sc">~</span> <span class="st">"Public Health Service"</span>,</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">9</span>  <span class="sc">~</span> <span class="st">"Community Health Service"</span>,</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">10</span> <span class="sc">~</span> <span class="st">"Hospital Service"</span>,</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">11</span> <span class="sc">~</span> <span class="st">"Optometry Service"</span>,</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">12</span> <span class="sc">~</span> <span class="st">"Urgent &amp; Emergency Care"</span>,</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">13</span> <span class="sc">~</span> <span class="st">"Hospice"</span>,</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">14</span> <span class="sc">~</span> <span class="st">"Care Home / Nursing Home"</span>,</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">15</span> <span class="sc">~</span> <span class="st">"Border Force"</span>,</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">16</span> <span class="sc">~</span> <span class="st">"Young Offender Institution"</span>,</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">17</span> <span class="sc">~</span> <span class="st">"Secure Training Centre"</span>,</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">18</span> <span class="sc">~</span> <span class="st">"Secure Childrens Home"</span>,</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">19</span> <span class="sc">~</span> <span class="st">"Immigration Removal Centre"</span>,</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">20</span> <span class="sc">~</span> <span class="st">"Court"</span>,</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">21</span> <span class="sc">~</span> <span class="st">"Police Custody"</span>,</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">22</span> <span class="sc">~</span> <span class="st">"Sexual Assault Referral Centre (SARC)"</span>,</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">24</span> <span class="sc">~</span> <span class="st">"Other – Justice Estate"</span>,</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">25</span> <span class="sc">~</span> <span class="st">"Prison"</span>,</span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">26</span> <span class="sc">~</span> <span class="st">"PCN"</span>,</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>          setting <span class="sc">==</span> <span class="dv">27</span> <span class="sc">~</span> <span class="st">"Independent Pharmacy"</span>,</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>          <span class="at">.default =</span> <span class="st">"Unknown"</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by setting codes</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(filter_setting)) {</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>    practices_query <span class="ot">&lt;-</span> practices_query <span class="sc">|&gt;</span></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(setting <span class="sc">%in%</span> filter_setting)</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by setting codes</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(filter_status_code)) {</span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>    practices_query <span class="ot">&lt;-</span> practices_query <span class="sc">|&gt;</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(status_code <span class="sc">%in%</span> filter_status_code)</span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>  practices_query</span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>Now we can use this function to get practices data using the different options we defined in the function above. Here are the first 5 rows of some columns we can select using the <code>select()</code> function from <code>dplyr</code>, unfiltered and without labels:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_practices</span>(con) <span class="sc">|&gt;</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(code, name, postcode, setting, status_code) <span class="sc">|&gt;</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># Source:   SQL [?? x 5]
+# Database: BigQueryConnection
+  code   name  postcode setting status_code
+  &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;      &lt;int&gt; &lt;chr&gt;      
+1 01Y999 &lt;NA&gt;  &lt;NA&gt;          -1 &lt;NA&gt;       
+2 09X999 &lt;NA&gt;  &lt;NA&gt;          -1 &lt;NA&gt;       
+3 NHT999 &lt;NA&gt;  &lt;NA&gt;          -1 &lt;NA&gt;       
+4 04R999 &lt;NA&gt;  &lt;NA&gt;          -1 &lt;NA&gt;       
+5 04E999 &lt;NA&gt;  &lt;NA&gt;          -1 &lt;NA&gt;       </code></pre>
 </div>
 </div>
+<p>We can specify to add labels for the setting codes and filter to only include standard GP practices (setting code 4).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_practices</span>(con, <span class="at">add_setting_labels =</span> <span class="cn">TRUE</span>, <span class="at">filter_setting =</span> <span class="dv">4</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(code, name, postcode, setting, setting_label, status_code) <span class="sc">|&gt;</span> </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># Source:   SQL [?? x 6]
+# Database: BigQueryConnection
+  code   name                   postcode setting setting_label status_code
+  &lt;chr&gt;  &lt;chr&gt;                  &lt;chr&gt;      &lt;int&gt; &lt;chr&gt;         &lt;chr&gt;      
+1 E82004 HATFIELD ROAD SURGERY  AL1 3FY        4 GP Practice   A          
+2 E82060 PARKBURY HOUSE SURGERY AL1 3HD        4 GP Practice   A          
+3 E82031 MALTINGS SURGERY       AL1 3JB        4 GP Practice   A          
+4 E82002 WRAFTON HOUSE SURGERY  AL10 0BS       4 GP Practice   A          
+5 E82018 LISTER HOUSE SURGERY   AL10 0NL       4 GP Practice   A          </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_practices</span>(con, <span class="at">add_setting_labels =</span> <span class="cn">TRUE</span>, <span class="at">filter_setting =</span> <span class="dv">4</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">add_status_code_labels =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(code, name, postcode, setting, setting_label, status_code, status_code_label) <span class="sc">|&gt;</span> </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># Source:   SQL [?? x 7]
+# Database: BigQueryConnection
+  code   name       postcode setting setting_label status_code status_code_label
+  &lt;chr&gt;  &lt;chr&gt;      &lt;chr&gt;      &lt;int&gt; &lt;chr&gt;         &lt;chr&gt;       &lt;chr&gt;            
+1 E82004 HATFIELD … AL1 3FY        4 GP Practice   A           Active           
+2 E82060 PARKBURY … AL1 3HD        4 GP Practice   A           Active           
+3 E82031 MALTINGS … AL1 3JB        4 GP Practice   A           Active           
+4 E82002 WRAFTON H… AL10 0BS       4 GP Practice   A           Active           
+5 E82018 LISTER HO… AL10 0NL       4 GP Practice   A           Active           </code></pre>
+</div>
+</div>
+</section>
+<section id="get-normalised-prescribing" class="level3" data-number="3.2.2">
+<h3 data-number="3.2.2" class="anchored" data-anchor-id="get-normalised-prescribing"><span class="header-section-number">3.2.2</span> Get normalised prescribing</h3>
+<p>For a description of the <code>normalised_prescribing</code> table see <a href="database-schema.html#sec-desc-normalised-prescribing" class="quarto-xref"><span>Section 2.1.1</span></a>. This function returns normalised prescribing data with optional filtering by BNF codes and date range.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show <code>get_normalised_prescribing()</code> function to help access and tidy the <code>normalised_prescribing</code> table</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>get_normalised_prescribing <span class="ot">&lt;-</span> <span class="cf">function</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  con,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">bnf_codes =</span> <span class="cn">NULL</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">start_date =</span> <span class="cn">NULL</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">end_date =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  np_query <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">tbl</span>(con, <span class="st">"normalised_prescribing"</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by BNF codes if provided</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(bnf_codes)) {</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    np_query <span class="ot">&lt;-</span> np_query <span class="sc">|&gt;</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(bnf_code <span class="sc">%in%</span> <span class="sc">!!</span>bnf_codes)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by start date if provided</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(start_date)) {</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    np_query <span class="ot">&lt;-</span> np_query <span class="sc">|&gt;</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(month <span class="sc">&gt;=</span> <span class="sc">!!</span>start_date)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by end date if provided</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(end_date)) {</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    np_query <span class="ot">&lt;-</span> np_query <span class="sc">|&gt;</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(month <span class="sc">&lt;=</span> <span class="sc">!!</span>end_date)</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  np_query</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>In this example we get normalised prescribing data for two BNF codes between January and March 2023.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_normalised_prescribing</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  con, </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">bnf_codes =</span> <span class="fu">c</span>(<span class="st">"0408010W0BBAKA1"</span>, <span class="st">"0601022B0AAASAS"</span>),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">start_date =</span> <span class="st">"2023-01-01"</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">end_date =</span> <span class="st">"2023-03-01"</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(practice <span class="sc">==</span> <span class="st">"D83033"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># Source:   SQL [?? x 12]
+# Database: BigQueryConnection
+  sha   regional_team stp   pct   practice bnf_code      bnf_name items net_cost
+  &lt;chr&gt; &lt;chr&gt;         &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;         &lt;chr&gt;    &lt;int&gt;    &lt;dbl&gt;
+1 QJG   Y61           QJG   06L   D83033   0408010W0BBA… Epilim …     5     68.1
+2 QJG   Y61           QJG   06L   D83033   0408010W0BBA… Epilim …     6     68.1
+3 QJG   Y61           QJG   06L   D83033   0601022B0AAA… Metform…    59    105. 
+4 QJG   Y61           QJG   06L   D83033   0601022B0AAA… Metform…    62    104. 
+5 QJG   Y61           QJG   06L   D83033   0408010W0BBA… Epilim …     6     78.6
+# ℹ 3 more variables: actual_cost &lt;dbl&gt;, quantity &lt;dbl&gt;, month &lt;dttm&gt;</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="writing-sql-with-dbplyr" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="writing-sql-with-dbplyr"><span class="header-section-number">3.3</span> Writing SQL with dbplyr</h2>
+<p>See <a href="https://dbplyr.tidyverse.org/articles/sql.html">Writing SQL with dbplyr</a>.</p>
+
+
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
