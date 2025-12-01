@@ -42,15 +42,29 @@ create_data_dict <- function(df, table_or_dict) {
     fmt_markdown(columns = everything()) |>
     cols_align(align = "left", columns = everything()) |>
     tab_style(
-      style = cell_text(weight = "bold", font = "monospace"),
+      style = cell_text(
+        align = "left", 
+        v_align = "top",
+        weight = "bold", 
+        font = "monospace"
+      ),
       locations = cells_body(columns = column_name)
     ) |>
     tab_style(
-      style = cell_text(style = "italic", color = "grey50", font = "monospace"),
+      style = cell_text(
+        align = "left", 
+        v_align = "top",
+        style = "italic",
+        color = "grey50",
+        font = "monospace"
+      ),
       locations = cells_body(columns = data_type)
     ) |>
     tab_style(
-      style = cell_text(color = "#1e90ff"),
+      style = cell_text(
+        align = "left", 
+        v_align = "top"
+      ),
       locations = cells_body(columns = description)
     ) |>
     tab_source_note(
@@ -60,7 +74,11 @@ create_data_dict <- function(df, table_or_dict) {
         ncol(df)
       ))
     ) |>
-    tab_options(table.font.size = px(14), heading.align = "left")
+    tab_options(
+      table.font.size = px(14),
+      heading.align = "left",
+      table.align="left"
+    )
 
   gt_tbl
 }

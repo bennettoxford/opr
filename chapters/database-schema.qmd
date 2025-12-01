@@ -45,7 +45,7 @@ This is the table you'll typically want to query rather than the raw prescribing
 normalised_prescribing <- tbl(con, "normalised_prescribing")
 
 df_normalised_prescribing <- normalised_prescribing |>
-  head(10) |>
+  head(5) |>
   collect()
 
 create_data_dict(
@@ -66,7 +66,7 @@ Open and close dates for regional teams.
 regional_teams <- tbl(con, "regional_teams")
 
 df_regional_teams <- regional_teams |>
-  head(10) |>
+  head(5) |>
   collect()
 
 create_data_dict(
@@ -80,29 +80,6 @@ create_data_dict(
 Includes all the practices in England, updated monthly.
 Contains latest month's data only (but includes closed practices).
 Practices with a `setting` of `4` are standard GP practices.
-Other settings are:
-
-- `0` = Other
-- `1` = WIC Practice
-- `2` = OOH Practice
-- `3` = WIC + OOH Practice
-- `4` = GP Practice
-- `8` = Public Health Service
-- `9` = Community Health Service
-- `10` = Hospital Service
-- `11` = Optometry Service
-- `12` = Urgent & Emergency Care
-- `13` = Hospice
-- `14` = Care Home / Nursing Home
-- `15` = Border Force
-- `16` = Young Offender Institution
-- `17` = Secure Training Centre
-- `18` = Secure Children's Home
-- `19` = Immigration Removal Centre
-- `20` = Court
-- `21` = Police Custody
-- `22` = Sexual Assault Referral Centre (SARC)
-- `24` = Other
 
 ```{r}
 #| label: desc-practices
@@ -113,18 +90,8 @@ practices <- tbl(con, "practices")
 
 df_practices <- practices |>
   filter(setting == 4) |> 
-  head(100) |>
+  head(5) |>
   collect()
-
-# Look at unique values sampled from each column
-# df_practices %>% 
-#   summarise(across(everything(), ~ sample(unique(.x), 1))) %>% 
-#   tidyr::pivot_longer(
-#     cols = everything(),
-#     values_transform = list(value = as.character),
-#     names_to  = "column",
-#     values_to = "value"
-#   )
 
 create_data_dict(
   df_practices,
@@ -144,19 +111,8 @@ Contains latest month's data only. Also contains calculated population weighting
 practice_statistics <- tbl(con, "practice_statistics")
 
 df_practice_statistics <- practice_statistics |>
-  head(10) |>
+  head(5) |>
   collect()
-
-# Look at unique values sampled from each column
-# df_practice_statistics %>% 
-#   summarise(across(everything(), ~ sample(unique(.x), 1))) %>% 
-#   tidyr::pivot_longer(
-#     cols = everything(),
-#     values_transform = list(value = as.character),
-#     names_to  = "column",
-#     values_to = "value"
-#   ) |> 
-#   print(n = 25)
 
 create_data_dict(
   df_practice_statistics,
@@ -191,12 +147,10 @@ hscic_dm <- dm_from_con(
   )
 )
 
-# Define primary keys
 hscic_dm <- hscic_dm |>
   dm_add_pk(practices, code) |>
   dm_add_pk(regional_teams, code)
 
-# Define foreign keys
 hscic_dm <- hscic_dm |>
   dm_add_fk(normalised_prescribing, practice, practices) |>
   dm_add_fk(normalised_prescribing, regional_team, regional_teams) |>

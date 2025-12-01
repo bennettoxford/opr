@@ -7,6 +7,12 @@ code-links:
 
 # Reusable functions
 
+Here I'll demonstrate how `dbplyr` can be used to define reusable functions for:
+
+1. **Connect to BigQuery**
+2. **Query tables and perform common data cleaning tasks**
+3. **Joining tables**
+
 All functions here are based on the `DBI`, `bigrquery`, `dplyr` and `dbplyr` packages to connect to BigQuery and query the OpenPrescribing data in R.
 
 ```{r}
@@ -52,24 +58,26 @@ A slighly more robust and flexibly function could also have an option to work wi
 #| code-summary: Show more flexible and robust function to connect to BigQuery
 ```
 
-However, the simple example would do the job and we can establish a connection like this:
+## Data access functions
+
+These functions provide a modular way to access and analyse OpenPrescribing data using `dbplyr`.
+Each function returns a lazy query that can be composed with other `dplyr` functions.
+For a more detailed overview see [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html).
+
+I'll demonstrate this how this could be useful for two commonly used tables: `practices` and `normalised_prescribing`.
+
+### Get practices
+
+To start we create a connection using the function we defined above:
 
 ```{r}
 #| label: use-connect-bq-function
 con <- connect_openprescribing()
 ```
 
-## Data access functions
-
-These functions provide a modular way to access and analyse OpenPrescribing data using dbplyr.
-Each function returns a lazy query that can be composed with other dplyr functions.
-For a more detailed overview see [Introduction to dbplyr](https://dbplyr.tidyverse.org/articles/dbplyr.html).
-
-I'll demonstrate this how this might be useful for two commonly used tables: `practices` and `normalised_prescribing`.
-
-### Get practices
-
 For a description of the `practices` table see @sec-desc-practices.
+Common data cleaning tasks when working with the `practices` table include adding filtering for specific pracitice settings and adding descriptive labels for setting and status codes.
+We can write a function using `dplyr` syntax to make these tasks easier and reusable across projects.
 
 ```{r}
 #| label: get-practices-function
@@ -152,15 +160,16 @@ get_practices <- function(
 }
 ```
 
-Now we can use this function to get practices data using the different options we defined in the function above.
+Now we can use the connection `con` and the function `get_practices()` to get practices data.
 Here are the first 5 rows of some columns we can select using the `select()` function from `dplyr`, unfiltered and without labels:
 
 ```{r}
 #| label: get-practices-function-example-1
-get_practices(con) |> 
-  select(code, name, postcode, setting, status_code) |> 
+get_practices(con) |>
+  select(code, name, postcode, setting, status_code) |>
   head(5)
 ```
+
 
 We can specify to add labels for the setting codes and filter to only include standard GP practices (setting code 4). 
 
@@ -171,6 +180,7 @@ get_practices(con, add_setting_labels = TRUE, filter_setting = 4) |>
   head(5)
 ```
 
+Also add labels for the status codes:
 
 ```{r}
 #| label: get-practices-function-example-3
@@ -178,6 +188,17 @@ get_practices(con, add_setting_labels = TRUE, filter_setting = 4,
               add_status_code_labels = TRUE) |> 
   select(code, name, postcode, setting, setting_label, status_code, status_code_label) |> 
   head(5)
+```
+
+To inspect the SQL query that `dbplyr` generates for this last example we can use the `show_query()` function:
+
+```{r}
+#| label: get-practices-function-show-sql
+get_practices(con, add_setting_labels = TRUE, filter_setting = 4,
+              add_status_code_labels = TRUE) |> 
+  select(code, name, postcode, setting, setting_label, status_code, status_code_label) |> 
+  head(5) |> 
+  show_query()
 ```
 
 ### Get normalised prescribing
@@ -232,6 +253,38 @@ get_normalised_prescribing(
   ) |> 
   filter(practice == "D83033") |> 
   head(5)
+```
+
+## Joining tables
+
+```{r}
+#| label: join-practices-normalised-prescribing
+ 
+# Create query for normalised prescribing 
+normalised_prescribing_query <- get_normalised_prescribing(con) |> 
+  select(month, practice, bnf_code, bnf_name, items, quantity)
+
+# Create query for practices 
+practices_query <- get_practices(con, add_setting_labels = TRUE, filter_setting = 4) |> 
+  select(code, name, setting, setting_label, status_code)
+
+# Join by practice / code
+joined_query <- normalised_prescribing_query |> 
+  inner_join(practices_query, by = c("practice" = "code"))
+```
+
+We can now filter this query futher using dplyr syntax, e.g., from a predefined list of BNF codes:
+
+```{r}
+#| label: filter-joined-query
+
+# Define a list of BNF codes
+# Metformin 500mg modified-release tablets
+metformin_bnf_codes <- c("0601022B0AAASAS")
+
+joined_query |> 
+  filter(bnf_code %in% metformin_bnf_codes) |> 
+  filter(month == "2025-03-01")
 ```
 
 ## Writing SQL with dbplyr
