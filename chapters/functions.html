@@ -195,7 +195,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#get-practices" id="toc-get-practices" class="nav-link" data-scroll-target="#get-practices"><span class="header-section-number">3.2.1</span> Get practices</a></li>
   <li><a href="#get-normalised-prescribing" id="toc-get-normalised-prescribing" class="nav-link" data-scroll-target="#get-normalised-prescribing"><span class="header-section-number">3.2.2</span> Get normalised prescribing</a></li>
   </ul></li>
-  <li><a href="#writing-sql-with-dbplyr" id="toc-writing-sql-with-dbplyr" class="nav-link" data-scroll-target="#writing-sql-with-dbplyr"><span class="header-section-number">3.3</span> Writing SQL with dbplyr</a></li>
+  <li><a href="#joining-tables" id="toc-joining-tables" class="nav-link" data-scroll-target="#joining-tables"><span class="header-section-number">3.3</span> Joining tables</a></li>
+  <li><a href="#writing-sql-with-dbplyr" id="toc-writing-sql-with-dbplyr" class="nav-link" data-scroll-target="#writing-sql-with-dbplyr"><span class="header-section-number">3.4</span> Writing SQL with dbplyr</a></li>
   </ul>
 <div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="../R/connect-bq.R"><i class="bi bi-file-code"></i>connect-bq.R</a></li></ul></div></nav>
     </div>
@@ -221,6 +222,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>Here I’ll demonstrate how <code>dbplyr</code> can be used to define reusable functions for:</p>
+<ol type="1">
+<li><strong>Connect to BigQuery</strong></li>
+<li><strong>Query tables and perform common data cleaning tasks</strong></li>
+<li><strong>Joining tables</strong></li>
+</ol>
 <p>All functions here are based on the <code>DBI</code>, <code>bigrquery</code>, <code>dplyr</code> and <code>dbplyr</code> packages to connect to BigQuery and query the OpenPrescribing data in R.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
@@ -309,18 +316,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<p>However, the simple example would do the job and we can establish a connection like this:</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">connect_openprescribing</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
 </section>
 <section id="data-access-functions" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="data-access-functions"><span class="header-section-number">3.2</span> Data access functions</h2>
-<p>These functions provide a modular way to access and analyse OpenPrescribing data using dbplyr. Each function returns a lazy query that can be composed with other dplyr functions. For a more detailed overview see <a href="https://dbplyr.tidyverse.org/articles/dbplyr.html">Introduction to dbplyr</a>.</p>
-<p>I’ll demonstrate this how this might be useful for two commonly used tables: <code>practices</code> and <code>normalised_prescribing</code>.</p>
+<p>These functions provide a modular way to access and analyse OpenPrescribing data using <code>dbplyr</code>. Each function returns a lazy query that can be composed with other <code>dplyr</code> functions. For a more detailed overview see <a href="https://dbplyr.tidyverse.org/articles/dbplyr.html">Introduction to dbplyr</a>.</p>
+<p>I’ll demonstrate this how this could be useful for two commonly used tables: <code>practices</code> and <code>normalised_prescribing</code>.</p>
 <section id="get-practices" class="level3" data-number="3.2.1">
 <h3 data-number="3.2.1" class="anchored" data-anchor-id="get-practices"><span class="header-section-number">3.2.1</span> Get practices</h3>
-<p>For a description of the <code>practices</code> table see <a href="database-schema.html#sec-desc-practices" class="quarto-xref"><span>Section 2.1.3</span></a>.</p>
+<p>To start we create a connection using the function we defined above:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">connect_openprescribing</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>For a description of the <code>practices</code> table see <a href="database-schema.html#sec-desc-practices" class="quarto-xref"><span>Section 2.1.3</span></a>. Common data cleaning tasks when working with the <code>practices</code> table include adding filtering for specific pracitice settings and adding descriptive labels for setting and status codes. We can write a function using <code>dplyr</code> syntax to make these tasks easier and reusable across projects.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show <code>get_practices()</code> function to help access and tidy the <code>practices</code> table</summary>
@@ -400,10 +407,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<p>Now we can use this function to get practices data using the different options we defined in the function above. Here are the first 5 rows of some columns we can select using the <code>select()</code> function from <code>dplyr</code>, unfiltered and without labels:</p>
+<p>Now we can use the connection <code>con</code> and the function <code>get_practices()</code> to get practices data. Here are the first 5 rows of some columns we can select using the <code>select()</code> function from <code>dplyr</code>, unfiltered and without labels:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_practices</span>(con) <span class="sc">|&gt;</span> </span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(code, name, postcode, setting, status_code) <span class="sc">|&gt;</span> </span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_practices</span>(con) <span class="sc">|&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(code, name, postcode, setting, status_code) <span class="sc">|&gt;</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># Source:   SQL [?? x 5]
@@ -434,6 +441,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 5 E82018 LISTER HOUSE SURGERY   AL10 0NL       4 GP Practice   A          </code></pre>
 </div>
 </div>
+<p>Also add labels for the status codes:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_practices</span>(con, <span class="at">add_setting_labels =</span> <span class="cn">TRUE</span>, <span class="at">filter_setting =</span> <span class="dv">4</span>,</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">add_status_code_labels =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span> </span>
@@ -451,6 +459,67 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 5 E82018 LISTER HO… AL10 0NL       4 GP Practice   A           Active           </code></pre>
 </div>
 </div>
+<p>To inspect the SQL query that <code>dbplyr</code> generates for this last example we can use the <code>show_query()</code> function:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_practices</span>(con, <span class="at">add_setting_labels =</span> <span class="cn">TRUE</span>, <span class="at">filter_setting =</span> <span class="dv">4</span>,</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">add_status_code_labels =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(code, name, postcode, setting, setting_label, status_code, status_code_label) <span class="sc">|&gt;</span> </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show_query</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;SQL&gt;
+SELECT
+  `code`,
+  `name`,
+  `postcode`,
+  `setting`,
+  CASE
+WHEN (`setting` = 0.0) THEN 'Other'
+WHEN (`setting` = 1.0) THEN 'WIC Practice'
+WHEN (`setting` = 2.0) THEN 'OOH Practice'
+WHEN (`setting` = 3.0) THEN 'WIC + OOH Practice'
+WHEN (`setting` = 4.0) THEN 'GP Practice'
+WHEN (`setting` = 8.0) THEN 'Public Health Service'
+WHEN (`setting` = 9.0) THEN 'Community Health Service'
+WHEN (`setting` = 10.0) THEN 'Hospital Service'
+WHEN (`setting` = 11.0) THEN 'Optometry Service'
+WHEN (`setting` = 12.0) THEN 'Urgent &amp; Emergency Care'
+WHEN (`setting` = 13.0) THEN 'Hospice'
+WHEN (`setting` = 14.0) THEN 'Care Home / Nursing Home'
+WHEN (`setting` = 15.0) THEN 'Border Force'
+WHEN (`setting` = 16.0) THEN 'Young Offender Institution'
+WHEN (`setting` = 17.0) THEN 'Secure Training Centre'
+WHEN (`setting` = 18.0) THEN 'Secure Childrens Home'
+WHEN (`setting` = 19.0) THEN 'Immigration Removal Centre'
+WHEN (`setting` = 20.0) THEN 'Court'
+WHEN (`setting` = 21.0) THEN 'Police Custody'
+WHEN (`setting` = 22.0) THEN 'Sexual Assault Referral Centre (SARC)'
+WHEN (`setting` = 24.0) THEN 'Other – Justice Estate'
+WHEN (`setting` = 25.0) THEN 'Prison'
+WHEN (`setting` = 26.0) THEN 'PCN'
+WHEN (`setting` = 27.0) THEN 'Independent Pharmacy'
+ELSE 'Unknown'
+END AS `setting_label`,
+  `status_code`,
+  `status_code_label`
+FROM (
+  SELECT
+    `practices`.*,
+    CASE
+WHEN (`status_code` = 'A') THEN 'Active'
+WHEN (`status_code` = 'B') THEN 'Retired'
+WHEN (`status_code` = 'C') THEN 'Closed'
+WHEN (`status_code` = 'D') THEN 'Dormant'
+WHEN (`status_code` = 'P') THEN 'Proposed'
+WHEN (`status_code` = 'U') THEN 'Unknown'
+ELSE 'Unknown'
+END AS `status_code_label`
+  FROM `practices`
+) `q01`
+WHERE (`setting` IN (4.0))
+LIMIT 5</code></pre>
+</div>
+</div>
 </section>
 <section id="get-normalised-prescribing" class="level3" data-number="3.2.2">
 <h3 data-number="3.2.2" class="anchored" data-anchor-id="get-normalised-prescribing"><span class="header-section-number">3.2.2</span> Get normalised prescribing</h3>
@@ -458,63 +527,107 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <details class="code-fold">
 <summary>Show <code>get_normalised_prescribing()</code> function to help access and tidy the <code>normalised_prescribing</code> table</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>get_normalised_prescribing <span class="ot">&lt;-</span> <span class="cf">function</span>(</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  con,</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">bnf_codes =</span> <span class="cn">NULL</span>,</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">start_date =</span> <span class="cn">NULL</span>,</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">end_date =</span> <span class="cn">NULL</span>) {</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  np_query <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">tbl</span>(con, <span class="st">"normalised_prescribing"</span>)</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by BNF codes if provided</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(bnf_codes)) {</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    np_query <span class="ot">&lt;-</span> np_query <span class="sc">|&gt;</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(bnf_code <span class="sc">%in%</span> <span class="sc">!!</span>bnf_codes)</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by start date if provided</span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(start_date)) {</span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    np_query <span class="ot">&lt;-</span> np_query <span class="sc">|&gt;</span></span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(month <span class="sc">&gt;=</span> <span class="sc">!!</span>start_date)</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by end date if provided</span></span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(end_date)) {</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    np_query <span class="ot">&lt;-</span> np_query <span class="sc">|&gt;</span></span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(month <span class="sc">&lt;=</span> <span class="sc">!!</span>end_date)</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  np_query</span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>get_normalised_prescribing <span class="ot">&lt;-</span> <span class="cf">function</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  con,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">bnf_codes =</span> <span class="cn">NULL</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">start_date =</span> <span class="cn">NULL</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">end_date =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  np_query <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">tbl</span>(con, <span class="st">"normalised_prescribing"</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by BNF codes if provided</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(bnf_codes)) {</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    np_query <span class="ot">&lt;-</span> np_query <span class="sc">|&gt;</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(bnf_code <span class="sc">%in%</span> <span class="sc">!!</span>bnf_codes)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by start date if provided</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(start_date)) {</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    np_query <span class="ot">&lt;-</span> np_query <span class="sc">|&gt;</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(month <span class="sc">&gt;=</span> <span class="sc">!!</span>start_date)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by end date if provided</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(end_date)) {</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    np_query <span class="ot">&lt;-</span> np_query <span class="sc">|&gt;</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">filter</span>(month <span class="sc">&lt;=</span> <span class="sc">!!</span>end_date)</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  np_query</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p>In this example we get normalised prescribing data for two BNF codes between January and March 2023.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_normalised_prescribing</span>(</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  con, </span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">bnf_codes =</span> <span class="fu">c</span>(<span class="st">"0408010W0BBAKA1"</span>, <span class="st">"0601022B0AAASAS"</span>),</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">start_date =</span> <span class="st">"2023-01-01"</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">end_date =</span> <span class="st">"2023-03-01"</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(practice <span class="sc">==</span> <span class="st">"D83033"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_normalised_prescribing</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  con, </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">bnf_codes =</span> <span class="fu">c</span>(<span class="st">"0408010W0BBAKA1"</span>, <span class="st">"0601022B0AAASAS"</span>),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">start_date =</span> <span class="st">"2023-01-01"</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">end_date =</span> <span class="st">"2023-03-01"</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(practice <span class="sc">==</span> <span class="st">"D83033"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># Source:   SQL [?? x 12]
 # Database: BigQueryConnection
   sha   regional_team stp   pct   practice bnf_code      bnf_name items net_cost
   &lt;chr&gt; &lt;chr&gt;         &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;         &lt;chr&gt;    &lt;int&gt;    &lt;dbl&gt;
-1 QJG   Y61           QJG   06L   D83033   0408010W0BBA… Epilim …     5     68.1
+1 QJG   Y61           QJG   06L   D83033   0408010W0BBA… Epilim …     6     78.6
 2 QJG   Y61           QJG   06L   D83033   0408010W0BBA… Epilim …     6     68.1
-3 QJG   Y61           QJG   06L   D83033   0601022B0AAA… Metform…    59    105. 
+3 QJG   Y61           QJG   06L   D83033   0601022B0AAA… Metform…    61     95.0
 4 QJG   Y61           QJG   06L   D83033   0601022B0AAA… Metform…    62    104. 
-5 QJG   Y61           QJG   06L   D83033   0408010W0BBA… Epilim …     6     78.6
+5 QJG   Y61           QJG   06L   D83033   0601022B0AAA… Metform…    59    105. 
 # ℹ 3 more variables: actual_cost &lt;dbl&gt;, quantity &lt;dbl&gt;, month &lt;dttm&gt;</code></pre>
 </div>
 </div>
 </section>
 </section>
-<section id="writing-sql-with-dbplyr" class="level2" data-number="3.3">
-<h2 data-number="3.3" class="anchored" data-anchor-id="writing-sql-with-dbplyr"><span class="header-section-number">3.3</span> Writing SQL with dbplyr</h2>
+<section id="joining-tables" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="joining-tables"><span class="header-section-number">3.3</span> Joining tables</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create query for normalised prescribing </span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>normalised_prescribing_query <span class="ot">&lt;-</span> <span class="fu">get_normalised_prescribing</span>(con) <span class="sc">|&gt;</span> </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(month, practice, bnf_code, bnf_name, items, quantity)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Create query for practices </span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>practices_query <span class="ot">&lt;-</span> <span class="fu">get_practices</span>(con, <span class="at">add_setting_labels =</span> <span class="cn">TRUE</span>, <span class="at">filter_setting =</span> <span class="dv">4</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(code, name, setting, setting_label, status_code)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Join by practice / code</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>joined_query <span class="ot">&lt;-</span> normalised_prescribing_query <span class="sc">|&gt;</span> </span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(practices_query, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"practice"</span> <span class="ot">=</span> <span class="st">"code"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can now filter this query futher using dplyr syntax, e.g., from a predefined list of BNF codes:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a list of BNF codes</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Metformin 500mg modified-release tablets</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>metformin_bnf_codes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"0601022B0AAASAS"</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>joined_query <span class="sc">|&gt;</span> </span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(bnf_code <span class="sc">%in%</span> metformin_bnf_codes) <span class="sc">|&gt;</span> </span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(month <span class="sc">==</span> <span class="st">"2025-03-01"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># Source:   SQL [?? x 10]
+# Database: BigQueryConnection
+   month               practice bnf_code   bnf_name items quantity name  setting
+   &lt;dttm&gt;              &lt;chr&gt;    &lt;chr&gt;      &lt;chr&gt;    &lt;int&gt;    &lt;dbl&gt; &lt;chr&gt;   &lt;int&gt;
+ 1 2025-03-01 00:00:00 A81016   0601022B0… Metform…   108     6440 PARK…       4
+ 2 2025-03-01 00:00:00 A81020   0601022B0… Metform…   128     7980 MART…       4
+ 3 2025-03-01 00:00:00 A81044   0601022B0… Metform…    91     5523 MCKE…       4
+ 4 2025-03-01 00:00:00 A81053   0601022B0… Metform…    89     6454 WOOD…       4
+ 5 2025-03-01 00:00:00 A81608   0601022B0… Metform…    79     5936 ELM …       4
+ 6 2025-03-01 00:00:00 A81622   0601022B0… Metform…    41     2667 GLAD…       4
+ 7 2025-03-01 00:00:00 A82009   0601022B0… Metform…   130    10696 BRID…       4
+ 8 2025-03-01 00:00:00 A82041   0601022B0… Metform…   273    17738 LOWT…       4
+ 9 2025-03-01 00:00:00 A82053   0601022B0… Metform…    85     7196 NUTW…       4
+10 2025-03-01 00:00:00 A82070   0601022B0… Metform…    50     3780 ST. …       4
+# ℹ more rows
+# ℹ 2 more variables: setting_label &lt;chr&gt;, status_code &lt;chr&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="writing-sql-with-dbplyr" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="writing-sql-with-dbplyr"><span class="header-section-number">3.4</span> Writing SQL with dbplyr</h2>
 <p>See <a href="https://dbplyr.tidyverse.org/articles/sql.html">Writing SQL with dbplyr</a>.</p>
 
 
