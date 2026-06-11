@@ -1,0 +1,35 @@
+Package: opr
+Title: OpenPrescribing in R
+Version: 0.1.0
+Authors@R: c(
+    person("Milan", "Wiedemann", email = "milan.wiedemann@gmail.com", comment = c(ORCID = "0000-0003-1991-282X"), role = c("aut", "cre")))
+Description: Provides functions to connect to and query the OpenPrescribing.net
+    BigQuery database. Helps researchers understand the available data and write
+    readable, reusable, and modular queries for analysing English prescribing
+    data using 'dplyr' and 'dbplyr' instead of SQL.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.1.0)
+Imports:
+    bigrquery,
+    cli,
+    DBI,
+    dbplyr,
+    dplyr,
+    rlang,
+    utils
+Suggests:
+    duckdb,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    tibble,
+    withr
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+LazyData: true
+URL: https://github.com/bennettoxford/opr, https://bennettoxford.github.io/opr/
+BugReports: https://github.com/bennettoxford/opr/issues
+Config/roxygen2/version: 8.0.0

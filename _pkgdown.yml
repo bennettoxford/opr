@@ -1,0 +1,58 @@
+url: https://bennettoxford.github.io/opr/
+
+repo:
+  url:
+    home: https://github.com/bennettoxford/opr/
+    source: https://github.com/bennettoxford/opr/blob/main/
+    issue: https://github.com/bennettoxford/opr/issues/
+    user: https://github.com/
+
+template:
+  bootstrap: 5
+
+home:
+  sidebar:
+    structure: [links, license, citation, authors, dev]
+
+navbar:
+  title: opr
+  type: default
+  left:
+    - text: "Function reference"
+      href: reference/index.html
+    - text: "Get started"
+      href: articles/opr.html
+    - text: "Guides"
+      menu:
+        - text: "Connect to BigQuery"
+          href: articles/connect-bigquery.html
+        - text: "Database schema"
+          href: articles/database-schema.html
+
+reference:
+  - title: "Connect"
+    contents:
+      - connect_bq
+  - title: "Query tables"
+    desc: "Query the main OpenPrescribing tables"
+    contents:
+      - get_practices
+      - get_normalised_prescribing
+  - title: "Lookup tables"
+    contents:
+      - practice_settings
+      - practice_statuses
+  - title: "Sample data"
+    desc: "Five-row samples of the main tables, bundled so examples run without a BigQuery connection"
+    contents:
+      - practices_sample
+      - normalised_prescribing_sample
+      - practice_statistics_sample
+      - regional_teams_sample
+
+articles:
+  - title: "Guides"
+    contents:
+      - opr
+      - connect-bigquery
+      - database-schema
