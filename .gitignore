@@ -1,12 +1,13 @@
-_book/
-.quarto/
-*.html
 .Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
+.DS_Store
 
-/.quarto/
-**/*.quarto_ipynb
-chapters/database-schema_files/*
-chapters/database-schema_cache/*
+# pkgdown site (built on CI)
+docs/
+
+# vignette build artefacts
+inst/doc
+/doc/
+/Meta/

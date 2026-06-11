@@ -1,0 +1,124 @@
+---
+title: "Database schema"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Database schema}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message = FALSE}
+library(opr)
+```
+
+This vignette describes the main tables used for research projects.
+The `hscic` dataset has many more tables (around 194); to list them all, run:
+
+```{r, eval = FALSE}
+con <- connect_bq()
+DBI::dbListTables(con)
+```
+
+Each table below comes with a five-row sample bundled in the package (for example `practices_sample`), so you can look at the data without a BigQuery connection.
+
+## `normalised_prescribing`
+
+A cleaned-up version of the main prescribing dataset, updated monthly.
+This is the table you will usually want, rather than the raw prescribing table.
+Query it with `get_normalised_prescribing()`.
+
+| Column | Description |
+|---|---|
+| `sha` | Strategic Health Authority code (e.g. QHM) |
+| `regional_team` | Regional team code (e.g. Y63) |
+| `stp` | Sustainability and Transformation Partnership code (e.g. QHM) |
+| `pct` | Primary Care Trust code (e.g. 16C) |
+| `practice` | Practice code (e.g. A81001) |
+| `bnf_code` | British National Formulary (BNF) code (e.g. 0408010W0BBAKA1) |
+| `bnf_name` | British National Formulary (BNF) drug name (e.g. Epilim Chrono 300 tablets) |
+| `items` | Number of items (one item = one appearance on a prescription) |
+| `net_cost` | Cost according to the Drug Tariff |
+| `actual_cost` | Actual cost after adjustments for bulk purchases, out of pocket expenses, etc. This is the cost field usually used in analyses |
+| `quantity` | Number of pills/grams/millilitres/dressings/ampoules prescribed |
+| `month` | Prescribing month |
+
+```{r}
+normalised_prescribing_sample
+```
+
+## `practices`
+
+GP practice details including addresses and organisational information, updated monthly.
+Contains the latest month's data only, but includes closed practices.
+Query it with `get_practices()`.
+
+| Column | Description |
+|---|---|
+| `code` | Practice code (e.g. E82084) |
+| `name` | Practice name (e.g. HATFIELD ROAD SURGERY) |
+| `address1` to `address5` | Address lines |
+| `postcode` | Practice postcode (e.g. AL1 3HD) |
+| `location` | Location of the practice in WGS84 format |
+| `ccg_id` | Clinical Commissioning Group identifier (e.g. 06N) |
+| `pcn_id` | Primary Care Network identifier (e.g. U73966) |
+| `setting` | Practice setting code, e.g. 4 = GP Practice. See `practice_settings` for all codes |
+| `close_date` | Date the practice closed |
+| `join_provider_date` | Date the practice joined its CCG |
+| `leave_provider_date` | Date the practice left its CCG (or closed) |
+| `open_date` | Date the practice opened |
+| `status_code` | Practice status code, e.g. A = Active. See `practice_statuses` for all codes |
+
+```{r}
+practices_sample
+```
+
+## `practice_statistics`
+
+Practice-level patient counts by age and gender, updated monthly.
+Contains the latest month's data only.
+Also contains population weightings used to compare prescribing across practices with different patient populations (STAR-PU and ASTRO-PU).
+
+| Column | Description |
+|---|---|
+| `month` | The month the statistics were recorded |
+| `male_0_4` to `female_75_plus` | Count of patients by gender and age band (e.g. `male_0_4` is the number of male patients aged 0 to 4) |
+| `total_list_size` | Total number of patients registered at the practice |
+| `astro_pu_cost` | ASTRO-PU (Age, Sex, and Temporary Resident Originated Prescribing Units) cost weighting |
+| `astro_pu_items` | ASTRO-PU items weighting |
+| `star_pu` | STAR-PU (Specific Therapeutic group Age-sex Related Prescribing Units) weightings, stored as JSON |
+| `pct_id` | Primary Care Trust identifier (e.g. 08G) |
+| `practice` | Practice code (e.g. E86005) |
+
+```{r}
+practice_statistics_sample
+```
+
+## `regional_teams`
+
+Names and open/close dates for regional teams.
+
+| Column | Description |
+|---|---|
+| `code` | Regional team code (e.g. Y57) |
+| `name` | Regional team name (e.g. SOUTH OF ENGLAND COMMISSIONING REGION) |
+| `open_date` | Date the regional team opened |
+| `close_date` | Date the regional team closed, `NA` if still open |
+
+```{r}
+regional_teams_sample
+```
+
+## How the tables join together
+
+- `normalised_prescribing$practice` matches `practices$code`
+- `normalised_prescribing$regional_team` matches `regional_teams$code`
+- `practice_statistics$practice` matches `practices$code`
+
+See the "Joining tables" section of `vignette("opr")` for a worked example.

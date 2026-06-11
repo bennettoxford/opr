@@ -1,0 +1,133 @@
+---
+title: "Getting started with opr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with opr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The `get_*()` functions in `opr` return a query, not data.
+The query runs in BigQuery, and nothing is downloaded until you call `collect()`.
+This means you can keep adding `dplyr` steps like `filter()` and `select()` first, and only the (much smaller) result is downloaded.
+
+```{r setup, message = FALSE}
+library(opr)
+library(dplyr)
+```
+
+The examples that query BigQuery are not run when this vignette is built.
+To run them yourself you need access to the database, see `vignette("connect-bigquery")`.
+
+## Connect
+
+```{r, eval = FALSE}
+con <- connect_bq()
+```
+
+## Get practices
+
+`get_practices()` queries the `practices` table, with options to add descriptive labels for the `setting` and `status_code` columns and to filter by them.
+For a description of the table see `vignette("database-schema")`, or look at the bundled five-row sample:
+
+```{r}
+practices_sample |>
+  select(code, name, postcode, setting, status_code)
+```
+
+The labels come from lookup tables shipped with the package:
+
+```{r}
+practice_settings
+
+practice_statuses
+```
+
+For example, to get all standard GP practices (setting code 4) with labels for setting and status codes:
+
+```{r, eval = FALSE}
+get_practices(
+  con,
+  add_setting_labels = TRUE,
+  filter_setting = 4,
+  add_status_code_labels = TRUE
+) |>
+  select(code, name, setting_label, status_code_label) |>
+  collect()
+```
+
+To see the SQL that will run in BigQuery, use `show_query()`:
+
+```{r, eval = FALSE}
+get_practices(con, add_setting_labels = TRUE, filter_setting = 4) |>
+  select(code, name, setting_label) |>
+  show_query()
+```
+
+## Get normalised prescribing
+
+`get_normalised_prescribing()` queries the `normalised_prescribing` table with optional filtering by BNF codes and prescribing month.
+The full table is very large, so filter before collecting.
+A sample of the table:
+
+```{r}
+normalised_prescribing_sample |>
+  select(month, practice, bnf_code, bnf_name, items, quantity)
+```
+
+In this example we get prescribing data for two BNF codes between January and March 2023:
+
+```{r, eval = FALSE}
+get_normalised_prescribing(
+  con,
+  bnf_codes = c("0408010W0BBAKA1", "0601022B0AAASAS"),
+  start_date = "2023-01-01",
+  end_date = "2023-03-01"
+) |>
+  collect()
+```
+
+## Joining tables
+
+Joins also run in BigQuery before anything is downloaded.
+Here we join prescribing data to GP practices and filter for metformin:
+
+```{r, eval = FALSE}
+# Metformin 500mg modified-release tablets in March 2025
+prescribing_query <- get_normalised_prescribing(
+  con,
+  bnf_codes = "0601022B0AAASAS",
+  start_date = "2025-03-01",
+  end_date = "2025-03-01"
+) |>
+  select(month, practice, bnf_code, bnf_name, items, quantity)
+
+practices_query <- get_practices(con, filter_setting = 4) |>
+  select(code, name, status_code)
+
+prescribing_query |>
+  inner_join(practices_query, by = c("practice" = "code")) |>
+  collect()
+```
+
+## Other tables
+
+The `get_*()` functions only cover the most commonly used tables.
+The connection from `connect_bq()` works with any table in the dataset:
+
+```{r, eval = FALSE}
+dplyr::tbl(con, "practice_statistics")
+```
+
+And if you prefer writing SQL directly, that works too:
+
+```{r, eval = FALSE}
+DBI::dbGetQuery(con, "SELECT code, name FROM practices LIMIT 5")
+```

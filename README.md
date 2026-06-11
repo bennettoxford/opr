@@ -1,62 +1,48 @@
-# OpenPrescribing in R (opr)
+# opr: OpenPrescribing in R
 
-This is a brief tutorial for accessing and analysing the [OpenPrescribing.net](https://openprescribing.net/) BigQuery database in R. The main goals are to help researchers (1) understand the available data and (2) write readable, reusable, and modular queries for analysing prescribing data. This tutorial covers:
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/bennettoxford/opr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bennettoxford/opr/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
 
-- Connecting to BigQuery from R
-- Understanding the database schema
-- Writing reusable functions for common queries
-- Applied examples of prescription data analysis
+The `opr` package helps researchers access and analyse the [OpenPrescribing.net](https://openprescribing.net/) BigQuery database in R.
+Instead of writing SQL, you can use [`dplyr`](https://dplyr.tidyverse.org/).
 
-The full tutorial is available online at [https://bennettoxford.github.io/opr/](https://bennettoxford.github.io/opr/).
+## Installation
 
-## For R users
-
-If you want to use the methods described in this tutorial, install these R packages:
+You can install the development version of `opr` from GitHub:
 
 ```r
-install.packages(c(
-  "DBI",
-  "bigrquery",
-  "dbplyr",
-  "dm",
-  "dplyr",
-  "tidyverse"
-))
+# install.packages("pak")
+pak::pak("bennettoxford/opr")
 ```
 
-You'll also need BigQuery credentials (see the tutorial for setup instructions).
+## Usage
 
-You can use R in [VS Code](https://code.visualstudio.com/docs/languages/r), [RStudio](https://posit.co/products/open-source/rstudio/), or any other IDE that supports R. I enojy working in [Positron](https://posit.co/products/ide/positron/) (the new RStudio based on VS Code) because it feels like I'm working in VS Code but with great R support. 
-
-## For contributors
-
-If you want to contribute to this tutorial, you'll need the packages above plus:
-
-**R packages:**
+You'll need BigQuery credentials, see [Connect to BigQuery](https://bennettoxford.github.io/opr/articles/connect-bigquery.html) for setup instructions.
 
 ```r
-install.packages(c(
-  "quarto",
-  "yaml",
-  "cli"
-))
+library(opr)
+library(dplyr)
+
+con <- connect_bq()
+
+# Standard GP practices (setting code 4) with descriptive labels
+get_practices(con, filter_setting = 4, add_setting_labels = TRUE) |>
+  collect()
+
+# Prescribing of metformin 500mg MR tablets in early 2023
+get_normalised_prescribing(
+  con,
+  bnf_codes = "0601022B0AAASAS",
+  start_date = "2023-01-01",
+  end_date = "2023-03-01"
+) |>
+  collect()
 ```
 
-**Development tools:**
+The `get_*()` functions return a query that runs in BigQuery; nothing is downloaded until you call `collect()`.
+See [Getting started](https://bennettoxford.github.io/opr/articles/opr.html) for more details.
 
-- [Quarto](https://quarto.org/docs/get-started/) for building the quarto book
-- [air](https://posit-dev.github.io/air/) for formatting R code (available as a [CLI tool](https://posit-dev.github.io/air/cli.html) or [VS Code extension](https://posit-dev.github.io/air/editor-vscode.html))
+## For developers
 
-## Building the book
-
-Preview the book locally with:
-
-```bash
-quarto preview
-```
-
-Publish the book on GitHub Pages with:
-
-```bash
-quarto publish gh-pages
-```
+See [DEVELOPERS.md](DEVELOPERS.md).

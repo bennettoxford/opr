@@ -1,0 +1,14 @@
+^LICENSE\.md$
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.vscode$
+^[.]?air[.]toml$
+^\.claude$
+^justfile$
+^data-raw$
+^DEVELOPERS\.md$
