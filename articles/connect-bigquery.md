@@ -6,10 +6,10 @@ BigQuery database and connecting to it from R with
 
 ## Get access
 
-To get access to the OpenPrescribing BigQuery database write a message
-in the `#openprescribing` Slack channel and tag `bennett-admins`. One of
-the admins will send you a JSON file with your BigQuery credentials in a
-private message. The file should look something like this:
+To get access to the OpenPrescribing BigQuery database write in any
+public Slack channel and tag `@bigquery_admins`. One of the admins will
+send you a JSON file with your BigQuery credentials in a private
+message. The file should look something like this:
 
 ``` json
 {
