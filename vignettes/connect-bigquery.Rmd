@@ -18,7 +18,7 @@ This guide walks you through getting access to the OpenPrescribing BigQuery data
 
 ## Get access
 
-To get access to the OpenPrescribing BigQuery database write a message in the `#openprescribing` Slack channel and tag `bennett-admins`.
+To get access to the OpenPrescribing BigQuery database write in any public Slack channel and tag `@bigquery_admins`.
 One of the admins will send you a JSON file with your BigQuery credentials in a private message.
 The file should look something like this:
 
