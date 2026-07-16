@@ -140,6 +140,22 @@ get_normalised_prescribing(
   collect()
 ```
 
+A code ending in `%` matches everything that starts with the part before
+it. The first nine characters of a BNF code identify the chemical, so
+`"0601022B0%"` gets all metformin hydrochloride presentations rather
+than just one:
+
+``` r
+
+get_normalised_prescribing(
+  con,
+  bnf_codes = "0601022B0%",
+  start_date = "2023-01-01",
+  end_date = "2023-03-01"
+) |>
+  collect()
+```
+
 ## Joining tables
 
 Joins also run in BigQuery before anything is downloaded. Here we join

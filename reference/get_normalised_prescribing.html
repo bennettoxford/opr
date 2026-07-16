@@ -11,7 +11,7 @@ rather than the raw prescribing table."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">opr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,9 @@ rather than the raw prescribing table.</p>
 
 <dt id="arg-bnf-codes">bnf_codes<a class="anchor" aria-label="anchor" href="#arg-bnf-codes"></a></dt>
 <dd><p>Character vector of BNF codes to keep, e.g.
-<code>"0601022B0AAASAS"</code>. Default <code>NULL</code> (no filter).</p></dd>
+<code>"0601022B0AAASAS"</code>. <code>%</code> anywhere in a code is a wildcard matching any
+characters, so <code>"0404000M0%"</code> keeps all methylphenidate presentations.
+Default <code>NULL</code> (no filter).</p></dd>
 
 
 <dt id="arg-start-date">start_date<a class="anchor" aria-label="anchor" href="#arg-start-date"></a></dt>
@@ -103,6 +105,15 @@ collecting.</p>
 <span class="r-in"><span><span class="fu">get_normalised_prescribing</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">con</span>,</span></span>
 <span class="r-in"><span>  bnf_codes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0408010W0BBAKA1"</span>, <span class="st">"0601022B0AAASAS"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  start_date <span class="op">=</span> <span class="st">"2023-01-01"</span>,</span></span>
+<span class="r-in"><span>  end_date <span class="op">=</span> <span class="st">"2023-03-01"</span></span></span>
+<span class="r-in"><span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Prescribing of all methylphenidate presentations, using a wildcard</span></span></span>
+<span class="r-in"><span><span class="fu">get_normalised_prescribing</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">con</span>,</span></span>
+<span class="r-in"><span>  bnf_codes <span class="op">=</span> <span class="st">"0404000M0%"</span>,</span></span>
 <span class="r-in"><span>  start_date <span class="op">=</span> <span class="st">"2023-01-01"</span>,</span></span>
 <span class="r-in"><span>  end_date <span class="op">=</span> <span class="st">"2023-03-01"</span></span></span>
 <span class="r-in"><span><span class="op">)</span> <span class="op">|&gt;</span></span></span>

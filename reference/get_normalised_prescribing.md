@@ -24,8 +24,10 @@ get_normalised_prescribing(
 
 - bnf_codes:
 
-  Character vector of BNF codes to keep, e.g. `"0601022B0AAASAS"`.
-  Default `NULL` (no filter).
+  Character vector of BNF codes to keep, e.g. `"0601022B0AAASAS"`. `%`
+  anywhere in a code is a wildcard matching any characters, so
+  `"0404000M0%"` keeps all methylphenidate presentations. Default `NULL`
+  (no filter).
 
 - start_date:
 
@@ -60,6 +62,15 @@ con <- connect_bq()
 get_normalised_prescribing(
   con,
   bnf_codes = c("0408010W0BBAKA1", "0601022B0AAASAS"),
+  start_date = "2023-01-01",
+  end_date = "2023-03-01"
+) |>
+  dplyr::collect()
+
+# Prescribing of all methylphenidate presentations, using a wildcard
+get_normalised_prescribing(
+  con,
+  bnf_codes = "0404000M0%",
   start_date = "2023-01-01",
   end_date = "2023-03-01"
 ) |>
