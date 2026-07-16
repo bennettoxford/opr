@@ -17,12 +17,12 @@ local_test_con <- function(env = parent.frame()) {
   )
 
   normalised_prescribing <- tibble::tibble(
-    practice = c("P1", "P1", "P2", "P2"),
-    bnf_code = c("100", "200", "100", "300"),
-    bnf_name = c("Drug A", "Drug B", "Drug A", "Drug C"),
-    items = 1:4,
+    practice = c("P1", "P1", "P2", "P2", "P3"),
+    bnf_code = c("100", "200", "100", "300", "101"),
+    bnf_name = c("Drug A", "Drug B", "Drug A", "Drug C", "Drug A1"),
+    items = 1:5,
     month = as.POSIXct(
-      c("2023-01-01", "2023-02-01", "2023-03-01", "2023-04-01"),
+      c("2023-01-01", "2023-02-01", "2023-03-01", "2023-04-01", "2023-01-01"),
       tz = "UTC"
     )
   )

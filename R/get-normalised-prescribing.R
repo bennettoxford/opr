@@ -11,7 +11,9 @@
 #'
 #' @param con A BigQuery connection from [connect_bq()].
 #' @param bnf_codes Character vector of BNF codes to keep, e.g.
-#' `"0601022B0AAASAS"`. Default `NULL` (no filter).
+#' `"0601022B0AAASAS"`. Codes may end in `%` to match everything starting
+#' with the part before it, e.g. `"0404000M0%"` keeps all methylphenidate
+#' presentations. Default `NULL` (no filter).
 #' @param start_date Earliest prescribing month to keep, as a `Date` or
 #' `"YYYY-MM-DD"` string. Default `NULL` (no filter).
 #' @param end_date Latest prescribing month to keep, as a `Date` or
@@ -33,6 +35,10 @@
 #'   end_date = "2023-03-01"
 #' ) |>
 #'   dplyr::collect()
+#'
+#' # Prescribing of all methylphenidate presentations, using a wildcard
+#' get_normalised_prescribing(con, bnf_codes = "0404000M0%") |>
+#'   dplyr::collect()
 #' }
 get_normalised_prescribing <- function(
   con,
@@ -52,7 +58,16 @@ get_normalised_prescribing <- function(
   query <- dplyr::tbl(con, "normalised_prescribing")
 
   if (!is.null(bnf_codes)) {
-    query <- dplyr::filter(query, .data$bnf_code %in% !!bnf_codes)
+    if (any(grepl("%", bnf_codes, fixed = TRUE))) {
+      like_sql <- paste0(
+        "bnf_code LIKE ",
+        DBI::dbQuoteString(con, bnf_codes),
+        collapse = " OR "
+      )
+      query <- dplyr::filter(query, dbplyr::sql(like_sql))
+    } else {
+      query <- dplyr::filter(query, .data$bnf_code %in% !!bnf_codes)
+    }
   }
 
   if (!is.null(start_date)) {
