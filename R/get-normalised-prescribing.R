@@ -11,9 +11,9 @@
 #'
 #' @param con A BigQuery connection from [connect_bq()].
 #' @param bnf_codes Character vector of BNF codes to keep, e.g.
-#' `"0601022B0AAASAS"`. Codes may end in `%` to match everything starting
-#' with the part before it, e.g. `"0404000M0%"` keeps all methylphenidate
-#' presentations. Default `NULL` (no filter).
+#' `"0601022B0AAASAS"`. `%` anywhere in a code is a wildcard matching any
+#' characters, so `"0404000M0%"` keeps all methylphenidate presentations.
+#' Default `NULL` (no filter).
 #' @param start_date Earliest prescribing month to keep, as a `Date` or
 #' `"YYYY-MM-DD"` string. Default `NULL` (no filter).
 #' @param end_date Latest prescribing month to keep, as a `Date` or
@@ -37,7 +37,12 @@
 #'   dplyr::collect()
 #'
 #' # Prescribing of all methylphenidate presentations, using a wildcard
-#' get_normalised_prescribing(con, bnf_codes = "0404000M0%") |>
+#' get_normalised_prescribing(
+#'   con,
+#'   bnf_codes = "0404000M0%",
+#'   start_date = "2023-01-01",
+#'   end_date = "2023-03-01"
+#' ) |>
 #'   dplyr::collect()
 #' }
 get_normalised_prescribing <- function(

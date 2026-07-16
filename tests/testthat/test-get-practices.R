@@ -50,11 +50,17 @@ test_that("get_practices composes with further dplyr verbs", {
 })
 
 test_that("add_lookup_label generates a CASE WHEN in SQL", {
+  # Match identifiers with "." so the test passes whichever quoting style
+  # (backticks or double quotes) the installed dbplyr version renders
   lf <- dbplyr::lazy_frame(
     setting = integer(),
     con = dbplyr::simulate_dbi()
   )
-  expect_snapshot(
-    add_lookup_label(lf, practice_settings, "setting", "setting_label")
-  )
+  sql <- add_lookup_label(lf, practice_settings, "setting", "setting_label") |>
+    dbplyr::sql_render() |>
+    as.character()
+  expect_match(sql, "CASE")
+  expect_match(sql, "WHEN \\(.setting. = 4\\) THEN 'GP Practice'")
+  expect_match(sql, "END AS .setting_label.")
+  expect_length(gregexpr("WHEN ", sql)[[1]], nrow(practice_settings))
 })
